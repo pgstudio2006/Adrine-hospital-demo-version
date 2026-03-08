@@ -219,6 +219,18 @@ const OT_PAGES: Record<string, React.ComponentType> = {
   '/ot/analytics': OTAnalytics,
 };
 
+const INVENTORY_PAGES: Record<string, React.ComponentType> = {
+  '/inventory': InventoryDashboard,
+  '/inventory/catalog': InventoryCatalog,
+  '/inventory/stock-entry': InventoryStockEntry,
+  '/inventory/distribution': InventoryDistribution,
+  '/inventory/requisitions': InventoryRequisitions,
+  '/inventory/procurement': InventoryPurchaseOrders,
+  '/inventory/adjustments': InventoryAdjustments,
+  '/inventory/equipment': InventoryEquipment,
+  '/inventory/reports': InventoryReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
