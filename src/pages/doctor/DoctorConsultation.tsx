@@ -163,7 +163,7 @@ export default function DoctorConsultation() {
             followUpDays={followUpDays} onFollowUpDaysChange={setFollowUpDays}
             followUpUnit={followUpUnit} onFollowUpUnitChange={setFollowUpUnit}
             treatmentPlan={treatmentPlan} onTreatmentPlanChange={setTreatmentPlan}
-            onSave={() => navigate(-1)} onDraft={() => {}}
+            onSave={handleSaveConsultation} onDraft={() => {}}
           />
         </motion.div>
       </div>
