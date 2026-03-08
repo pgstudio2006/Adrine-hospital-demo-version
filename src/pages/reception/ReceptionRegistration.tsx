@@ -75,6 +75,7 @@ const validateAadhaar = (aadhaar: string) => /^\d{4}\s?\d{4}\s?\d{4}$/.test(aadh
 const validateABHA = (abha: string) => /^\d{2}-\d{4}-\d{4}-\d{4}$/.test(abha);
 
 export default function ReceptionRegistration() {
+  const { patients: storePatients, registerPatient } = useHospital();
   const [mode, setMode] = useState<'list' | 'new' | 'emergency' | 'merge' | 'abha-lookup'>('list');
   const [search, setSearch] = useState('');
   const [step, setStep] = useState(0);
