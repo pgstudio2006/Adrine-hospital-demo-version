@@ -96,7 +96,7 @@ const LAB_PAGES: Record<string, React.ComponentType> = {
   '/lab/reports': LabReports,
 };
 
-
+function AppRoutes() {
   const { user } = useAuth();
 
   if (!user) {
