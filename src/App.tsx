@@ -44,6 +44,14 @@ import ReceptionBilling from "@/pages/reception/ReceptionBilling";
 import ReceptionBeds from "@/pages/reception/ReceptionBeds";
 import ReceptionIPD from "@/pages/reception/ReceptionIPD";
 
+// Lab pages
+import LabDashboard from "@/pages/lab/LabDashboard";
+import LabWorklist from "@/pages/lab/LabWorklist";
+import LabSamples from "@/pages/lab/LabSamples";
+import LabEntry from "@/pages/lab/LabEntry";
+import LabVerification from "@/pages/lab/LabVerification";
+import LabReports from "@/pages/lab/LabReports";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
@@ -77,6 +85,15 @@ const RECEPTION_PAGES: Record<string, React.ComponentType> = {
   '/reception/billing': ReceptionBilling,
   '/reception/beds': ReceptionBeds,
   '/reception/ipd': ReceptionIPD,
+};
+
+const LAB_PAGES: Record<string, React.ComponentType> = {
+  '/lab': LabDashboard,
+  '/lab/worklist': LabWorklist,
+  '/lab/samples': LabSamples,
+  '/lab/entry': LabEntry,
+  '/lab/verification': LabVerification,
+  '/lab/reports': LabReports,
 };
 
 function AppRoutes() {
@@ -122,8 +139,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Lab routes — fully built */}
+      {Object.entries(LAB_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -132,7 +156,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
