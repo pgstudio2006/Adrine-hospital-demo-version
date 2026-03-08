@@ -40,7 +40,7 @@ export default function EmergencyObservation() {
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4"><p className="text-2xl font-bold text-foreground">{occupied}</p><p className="text-xs text-muted-foreground">Occupied Beds</p></Card>
         <Card className="p-4"><p className="text-2xl font-bold text-foreground">{available}</p><p className="text-xs text-muted-foreground">Available Beds</p></Card>
-        <Card className={`p-4 ${overdue > 0 ? 'border-destructive/30' : ''}`}><p className="text-2xl font-bold text-foreground">{overdue}</p><p className="text-xs text-muted-foreground">Overdue (>6h)</p></Card>
+        <Card className={`p-4 ${overdue > 0 ? 'border-destructive/30' : ''}`}><p className="text-2xl font-bold text-foreground">{overdue}</p><p className="text-xs text-muted-foreground">{'Overdue (>6h)'}</p></Card>
       </div>
 
       {/* Bed Grid */}
