@@ -145,7 +145,6 @@ const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
 
 const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept': BillingDashboard,
-  '/billing-dept': BillingDashboard,
   '/billing-dept/invoices': BillingInvoices,
   '/billing-dept/payments': BillingPayments,
   '/billing-dept/ipd-billing': BillingIPD,
