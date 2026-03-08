@@ -82,6 +82,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   ot_coordinator: [
     'dashboard', 'ot_management', 'reports',
   ],
+  inventory_manager: [
+    'dashboard', 'inventory', 'reports',
+  ],
 };
 
 export function hasAccess(role: UserRole, module: ModuleKey): boolean {
