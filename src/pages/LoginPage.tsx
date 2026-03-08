@@ -37,6 +37,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   inventory_manager: 'Central store & supply chain',
   emergency: 'ER triage, cases & trauma care',
   hr_manager: 'Staff, attendance & workforce',
+  scheduler: 'Appointments & resource scheduling',
 };
 
 export default function LoginPage() {

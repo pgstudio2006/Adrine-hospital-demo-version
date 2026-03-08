@@ -156,4 +156,5 @@ export const ROLE_BASE_PATH: Record<UserRole, string> = {
   inventory_manager: '/inventory',
   emergency: '/emergency',
   hr_manager: '/hr',
+  scheduler: '/scheduling',
 };
