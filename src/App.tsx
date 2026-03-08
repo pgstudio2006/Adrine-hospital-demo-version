@@ -45,6 +45,17 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/analytics': DoctorAnalytics,
 };
 
+const RECEPTION_PAGES: Record<string, React.ComponentType> = {
+  '/reception': ReceptionDashboard,
+  '/reception/registration': ReceptionRegistration,
+  '/reception/appointments': ReceptionAppointments,
+  '/reception/checkin': ReceptionCheckIn,
+  '/reception/queue': ReceptionQueue,
+  '/reception/billing': ReceptionBilling,
+  '/reception/beds': ReceptionBeds,
+  '/reception/ipd': ReceptionIPD,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
