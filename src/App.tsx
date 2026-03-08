@@ -319,6 +319,17 @@ const SCHEDULING_PAGES: Record<string, React.ComponentType> = {
   '/scheduling/reports': SchedulingReports,
 };
 
+const DIALYSIS_PAGES: Record<string, React.ComponentType> = {
+  '/dialysis': DialysisDashboard,
+  '/dialysis/patients': DialysisPatients,
+  '/dialysis/schedule': DialysisSchedule,
+  '/dialysis/session': DialysisSession,
+  '/dialysis/machines': DialysisMachines,
+  '/dialysis/consumables': DialysisConsumables,
+  '/dialysis/billing': DialysisBilling,
+  '/dialysis/reports': DialysisReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
