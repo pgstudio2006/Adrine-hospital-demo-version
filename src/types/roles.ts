@@ -30,6 +30,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   radiologist: 'Radiologist',
   ot_coordinator: 'OT Coordinator',
   inventory_manager: 'Inventory Manager',
+  emergency: 'Emergency / ER',
 };
 
 export type ModuleKey =
