@@ -94,6 +94,18 @@ import BillingInsurance from "@/pages/billing/BillingInsurance";
 import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
 
+// OT pages
+import OTDashboard from "@/pages/ot/OTDashboard";
+import OTSchedule from "@/pages/ot/OTSchedule";
+import OTRooms from "@/pages/ot/OTRooms";
+import OTTeams from "@/pages/ot/OTTeams";
+import OTPreOp from "@/pages/ot/OTPreOp";
+import OTIntraOp from "@/pages/ot/OTIntraOp";
+import OTPostOp from "@/pages/ot/OTPostOp";
+import OTInventory from "@/pages/ot/OTInventory";
+import OTReports from "@/pages/ot/OTReports";
+import OTAnalytics from "@/pages/ot/OTAnalytics";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
