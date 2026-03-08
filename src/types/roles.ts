@@ -26,6 +26,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   pharmacist: 'Pharmacist',
   billing: 'Billing & Finance',
   radiologist: 'Radiologist',
+  ot_coordinator: 'OT Coordinator',
 };
 
 export type ModuleKey =
