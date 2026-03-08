@@ -23,6 +23,16 @@ import DoctorPatientProfile from "@/pages/doctor/DoctorPatientProfile";
 import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
 import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 
+// Reception pages
+import ReceptionDashboard from "@/pages/reception/ReceptionDashboard";
+import ReceptionRegistration from "@/pages/reception/ReceptionRegistration";
+import ReceptionAppointments from "@/pages/reception/ReceptionAppointments";
+import ReceptionCheckIn from "@/pages/reception/ReceptionCheckIn";
+import ReceptionQueue from "@/pages/reception/ReceptionQueue";
+import ReceptionBilling from "@/pages/reception/ReceptionBilling";
+import ReceptionBeds from "@/pages/reception/ReceptionBeds";
+import ReceptionIPD from "@/pages/reception/ReceptionIPD";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
