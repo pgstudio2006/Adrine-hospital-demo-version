@@ -10,6 +10,7 @@ import ConsultationExamination, { type ExamFindings } from './consultation/Consu
 import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOrder } from './consultation/ConsultationOrders';
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
 import ConsultationRightPanel from './consultation/ConsultationRightPanel';
+import PrescriptionPreview from './consultation/PrescriptionPreview';
 import { useHospital } from '@/stores/hospitalStore';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -50,6 +51,7 @@ export default function DoctorConsultation() {
   const [followUpUnit, setFollowUpUnit] = useState('Days');
   const [viewMode, setViewMode] = useState<'Digital' | 'Tablet'>('Digital');
   const [leftTab, setLeftTab] = useState<'clinical' | 'orders'>('clinical');
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleSaveConsultation = () => {
     saveConsultation({
@@ -164,9 +166,34 @@ export default function DoctorConsultation() {
             followUpUnit={followUpUnit} onFollowUpUnitChange={setFollowUpUnit}
             treatmentPlan={treatmentPlan} onTreatmentPlanChange={setTreatmentPlan}
             onSave={handleSaveConsultation} onDraft={() => {}}
+            onPreview={() => setShowPreview(true)}
           />
         </motion.div>
       </div>
+
+      {/* Prescription Preview Dialog */}
+      <PrescriptionPreview
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        data={{
+          patientName,
+          patientAge: patient?.age ?? 0,
+          patientGender: patient?.gender ?? 'Male',
+          uhid: patientId || '',
+          phone: patient?.phone,
+          doctorName: user?.name || 'Dr. Doctor',
+          department: patient?.department || 'General Medicine',
+          vitals,
+          complaints,
+          diagnoses,
+          medications,
+          labTests,
+          radiologyOrders,
+          advice,
+          followUpDays,
+          followUpUnit,
+        }}
+      />
     </div>
   );
 }

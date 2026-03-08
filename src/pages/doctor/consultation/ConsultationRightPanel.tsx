@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   FileText, Lock, Eye, EyeOff, Calendar, Sparkles,
-  BedDouble, UserPlus, Award, BookOpen, ArrowRightLeft
+  BedDouble, UserPlus, Award, BookOpen, ArrowRightLeft, FileSearch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,12 +20,13 @@ interface Props {
   onTreatmentPlanChange: (v: string) => void;
   onSave: () => void;
   onDraft: () => void;
+  onPreview?: () => void;
 }
 
 export default function ConsultationRightPanel({
   advice, onAdviceChange, privateNotes, onPrivateNotesChange,
   followUpDays, onFollowUpDaysChange, followUpUnit, onFollowUpUnitChange,
-  treatmentPlan, onTreatmentPlanChange, onSave, onDraft,
+  treatmentPlan, onTreatmentPlanChange, onSave, onDraft, onPreview,
 }: Props) {
   const [showPrivateNotes, setShowPrivateNotes] = useState(false);
   const [showAdmission, setShowAdmission] = useState(false);
@@ -155,6 +156,11 @@ export default function ConsultationRightPanel({
 
       {/* Save Actions */}
       <div className="space-y-2 pt-2">
+        {onPreview && (
+          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={onPreview}>
+            <FileSearch className="w-3.5 h-3.5" /> Preview Prescription
+          </Button>
+        )}
         <Button size="sm" className="w-full bg-foreground text-background hover:bg-foreground/90" onClick={onSave}>
           Save & Print Prescription
         </Button>
