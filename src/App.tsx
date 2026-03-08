@@ -57,6 +57,17 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/analytics': DoctorAnalytics,
 };
 
+const NURSE_PAGES: Record<string, React.ComponentType> = {
+  '/nurse': NurseDashboard,
+  '/nurse/ward': NurseWard,
+  '/nurse/admissions': NurseAdmissions,
+  '/nurse/tasks': NurseTasks,
+  '/nurse/medications': NurseMedications,
+  '/nurse/vitals': NurseVitals,
+  '/nurse/discharge': NurseDischarge,
+  '/nurse/reports': NurseReports,
+};
+
 const RECEPTION_PAGES: Record<string, React.ComponentType> = {
   '/reception': ReceptionDashboard,
   '/reception/registration': ReceptionRegistration,
