@@ -87,6 +87,7 @@ export default function DoctorIPD() {
   const [search, setSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<IPDPatient | null>(ipdPatients[1]);
   const [condFilter, setCondFilter] = useState('All');
+  const navigate = useNavigate();
 
   const filtered = ipdPatients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.bed.toLowerCase().includes(search.toLowerCase());
