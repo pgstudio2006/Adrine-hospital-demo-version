@@ -9,6 +9,14 @@ export interface RoleTab {
 export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
   admin: [
     { key: 'dashboard', label: 'Dashboard', path: '/admin' },
+    { key: 'command-center', label: 'Command Center', path: '/admin/command-center' },
+    { key: 'mortality', label: 'Mortality Analytics', path: '/admin/mortality' },
+    { key: 'ai-workflow', label: 'AI Workflow', path: '/admin/ai-workflow' },
+    { key: 'disease-mapping', label: 'Disease Mapping', path: '/admin/disease-mapping' },
+    { key: 'data-mining', label: 'Data Mining', path: '/admin/data-mining' },
+    { key: 'kaizen', label: 'Kaizen', path: '/admin/kaizen' },
+    { key: 'revenue-cycle', label: 'Revenue Cycle', path: '/admin/revenue-cycle' },
+    { key: 'treatment-success', label: 'Treatment Outcomes', path: '/admin/treatment-success' },
     { key: 'staff', label: 'Staff', path: '/admin/staff' },
     { key: 'departments', label: 'Departments', path: '/admin/departments' },
     { key: 'finance', label: 'Finance', path: '/admin/finance' },
