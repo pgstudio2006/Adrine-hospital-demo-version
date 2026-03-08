@@ -178,7 +178,7 @@ export default function ReceptionRegistration() {
   const newUHID = `UHID-${(240000 + storePatients.length + 1).toString()}`;
   const calculatedAge = formData.dob ? Math.floor((Date.now() - new Date(formData.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
 
-  const filtered = existingPatients.filter(p => {
+  const filtered = storePatients.filter(p => {
     if (!search) return true;
     const q = search.toLowerCase();
     const branchMatch = p.branch === selectedBranch || selectedBranch === 'All Branches';
