@@ -62,6 +62,13 @@ import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
 import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
 import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
 
+// Radiology pages
+import RadiologyDashboard from "@/pages/radiology/RadiologyDashboard";
+import RadiologyOrders from "@/pages/radiology/RadiologyOrders";
+import RadiologyWorklist from "@/pages/radiology/RadiologyWorklist";
+import RadiologyReports from "@/pages/radiology/RadiologyReports";
+import RadiologySettings from "@/pages/radiology/RadiologySettings";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
@@ -115,6 +122,14 @@ const PHARMACY_PAGES: Record<string, React.ComponentType> = {
   '/pharmacy/suppliers': PharmacySuppliers,
   '/pharmacy/purchase': PharmacyPurchase,
   '/pharmacy/queries': PharmacyQueries,
+};
+
+const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
+  '/radiology': RadiologyDashboard,
+  '/radiology/orders': RadiologyOrders,
+  '/radiology/worklist': RadiologyWorklist,
+  '/radiology/reports': RadiologyReports,
+  '/radiology/settings': RadiologySettings,
 };
 
 function AppRoutes() {
@@ -174,8 +189,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Radiology routes — fully built */}
+      {Object.entries(RADIOLOGY_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -184,7 +206,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
