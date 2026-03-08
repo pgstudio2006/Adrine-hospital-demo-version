@@ -208,8 +208,9 @@ function AppRoutes() {
           <AppLayout><Component /></AppLayout>
         } />
       ))}
+      <Route path="/admin/geo-intelligence" element={<AppLayout><AdminGeoIntelligence /></AppLayout>} />
 
-      {/* Doctor routes — fully built */}
+
       {Object.entries(DOCTOR_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
           <AppLayout><Component /></AppLayout>
