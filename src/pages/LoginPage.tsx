@@ -29,6 +29,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   pharmacist: 'Dispensing & inventory control',
   billing: 'Billing, revenue & insurance',
   radiologist: 'Radiology worklist & reporting',
+  ot_coordinator: 'OT scheduling & surgical teams',
 };
 
 export default function LoginPage() {
