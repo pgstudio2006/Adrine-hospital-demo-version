@@ -15,9 +15,11 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'expenses', label: 'Expenses', path: '/admin/expenses' },
     { key: 'approvals', label: 'Approvals', path: '/admin/approvals' },
     { key: 'claims', label: 'Claims', path: '/admin/claims' },
+    { key: 'doctor-sharing', label: 'Doctor Sharing', path: '/admin/doctor-sharing' },
     { key: 'mrd', label: 'MRD', path: '/admin/mrd' },
     { key: 'mis', label: 'MIS Reports', path: '/admin/mis' },
     { key: 'audit', label: 'Audit', path: '/admin/audit' },
+    { key: 'phonebook', label: 'Phone Book', path: '/admin/phonebook' },
     { key: 'settings', label: 'Settings', path: '/admin/settings' },
   ],
   doctor: [
