@@ -224,6 +224,7 @@ const PHARMACY_PAGES: Record<string, React.ComponentType> = {
   '/pharmacy/suppliers': PharmacySuppliers,
   '/pharmacy/purchase': PharmacyPurchase,
   '/pharmacy/queries': PharmacyQueries,
+  '/pharmacy/schedule-h': PharmacyScheduleH,
 };
 
 const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
