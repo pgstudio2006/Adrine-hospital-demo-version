@@ -19,6 +19,9 @@ import DoctorSchedule from "@/pages/doctor/DoctorSchedule";
 import DoctorLabs from "@/pages/doctor/DoctorLabs";
 import DoctorIPD from "@/pages/doctor/DoctorIPD";
 import DoctorAnalytics from "@/pages/doctor/DoctorAnalytics";
+import DoctorPatientProfile from "@/pages/doctor/DoctorPatientProfile";
+import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
+import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 
 const queryClient = new QueryClient();
 
