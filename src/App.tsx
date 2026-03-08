@@ -167,8 +167,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Pharmacy routes — fully built */}
+      {Object.entries(PHARMACY_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -177,7 +184,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
