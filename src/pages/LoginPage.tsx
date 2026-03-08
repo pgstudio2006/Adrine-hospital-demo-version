@@ -35,6 +35,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   ot_coordinator: 'OT scheduling & surgical teams',
   inventory_manager: 'Central store & supply chain',
   emergency: 'ER triage, cases & trauma care',
+  hr_manager: 'Staff, attendance & workforce',
 };
 
 export default function LoginPage() {
