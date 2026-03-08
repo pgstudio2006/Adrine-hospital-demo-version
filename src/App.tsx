@@ -128,6 +128,17 @@ import EmergencyMLC from "@/pages/emergency/EmergencyMLC";
 import EmergencyAmbulance from "@/pages/emergency/EmergencyAmbulance";
 import EmergencyReports from "@/pages/emergency/EmergencyReports";
 
+// HR pages
+import HRDashboard from "@/pages/hr/HRDashboard";
+import HRStaff from "@/pages/hr/HRStaff";
+import HRScheduling from "@/pages/hr/HRScheduling";
+import HRAttendance from "@/pages/hr/HRAttendance";
+import HRLeave from "@/pages/hr/HRLeave";
+import HRCredentials from "@/pages/hr/HRCredentials";
+import HRTraining from "@/pages/hr/HRTraining";
+import HRPerformance from "@/pages/hr/HRPerformance";
+import HRReports from "@/pages/hr/HRReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
