@@ -155,7 +155,16 @@ import SchedulingWaitlist from "@/pages/scheduling/SchedulingWaitlist";
 import SchedulingTeleconsult from "@/pages/scheduling/SchedulingTeleconsult";
 import SchedulingReports from "@/pages/scheduling/SchedulingReports";
 
-const queryClient = new QueryClient();
+// Dialysis pages
+import DialysisDashboard from "@/pages/dialysis/DialysisDashboard";
+import DialysisPatients from "@/pages/dialysis/DialysisPatients";
+import DialysisSchedule from "@/pages/dialysis/DialysisSchedule";
+import DialysisSession from "@/pages/dialysis/DialysisSession";
+import DialysisMachines from "@/pages/dialysis/DialysisMachines";
+import DialysisConsumables from "@/pages/dialysis/DialysisConsumables";
+import DialysisBilling from "@/pages/dialysis/DialysisBilling";
+import DialysisReports from "@/pages/dialysis/DialysisReports";
+
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin': AdminDashboard,
