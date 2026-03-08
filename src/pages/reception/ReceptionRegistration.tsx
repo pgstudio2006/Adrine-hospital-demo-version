@@ -175,7 +175,7 @@ export default function ReceptionRegistration() {
     return storePatients.find(p => p.phone === formData.phone) || null;
   }, [formData.phone, storePatients]);
 
-  const newUHID = `UHID-${(240000 + existingPatients.length + 1).toString()}`;
+  const newUHID = `UHID-${(240000 + storePatients.length + 1).toString()}`;
   const calculatedAge = formData.dob ? Math.floor((Date.now() - new Date(formData.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
 
   const filtered = existingPatients.filter(p => {
