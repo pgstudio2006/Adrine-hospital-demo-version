@@ -124,6 +124,14 @@ const PHARMACY_PAGES: Record<string, React.ComponentType> = {
   '/pharmacy/queries': PharmacyQueries,
 };
 
+const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
+  '/radiology': RadiologyDashboard,
+  '/radiology/orders': RadiologyOrders,
+  '/radiology/worklist': RadiologyWorklist,
+  '/radiology/reports': RadiologyReports,
+  '/radiology/settings': RadiologySettings,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
