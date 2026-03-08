@@ -94,6 +94,18 @@ import BillingInsurance from "@/pages/billing/BillingInsurance";
 import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
 
+// OT pages
+import OTDashboard from "@/pages/ot/OTDashboard";
+import OTSchedule from "@/pages/ot/OTSchedule";
+import OTRooms from "@/pages/ot/OTRooms";
+import OTTeams from "@/pages/ot/OTTeams";
+import OTPreOp from "@/pages/ot/OTPreOp";
+import OTIntraOp from "@/pages/ot/OTIntraOp";
+import OTPostOp from "@/pages/ot/OTPostOp";
+import OTInventory from "@/pages/ot/OTInventory";
+import OTReports from "@/pages/ot/OTReports";
+import OTAnalytics from "@/pages/ot/OTAnalytics";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -183,6 +195,19 @@ const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept/reports': BillingReports,
 };
 
+const OT_PAGES: Record<string, React.ComponentType> = {
+  '/ot': OTDashboard,
+  '/ot/schedule': OTSchedule,
+  '/ot/rooms': OTRooms,
+  '/ot/teams': OTTeams,
+  '/ot/preop': OTPreOp,
+  '/ot/intraop': OTIntraOp,
+  '/ot/postop': OTPostOp,
+  '/ot/inventory': OTInventory,
+  '/ot/reports': OTReports,
+  '/ot/analytics': OTAnalytics,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -262,8 +287,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* OT routes — fully built */}
+      {Object.entries(OT_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -272,7 +304,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>

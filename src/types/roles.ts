@@ -6,7 +6,8 @@ export type UserRole =
   | 'lab_technician'
   | 'pharmacist'
   | 'billing'
-  | 'radiologist';
+  | 'radiologist'
+  | 'ot_coordinator';
 
 export interface User {
   id: string;
@@ -25,6 +26,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   pharmacist: 'Pharmacist',
   billing: 'Billing & Finance',
   radiologist: 'Radiologist',
+  ot_coordinator: 'OT Coordinator',
 };
 
 export type ModuleKey =
@@ -74,6 +76,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   ],
   radiologist: [
     'dashboard', 'radiology', 'reports',
+  ],
+  ot_coordinator: [
+    'dashboard', 'ot_management', 'reports',
   ],
 };
 
