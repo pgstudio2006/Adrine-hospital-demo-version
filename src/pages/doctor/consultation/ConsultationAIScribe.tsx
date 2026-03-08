@@ -153,7 +153,7 @@ export default function ConsultationAIScribe({ open, onClose, onApply, patientNa
           'HTTP-Referer': window.location.origin,
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-exp:free',
+          model: 'google/gemini-2.5-flash-preview-05-20',
           messages: [
             {
               role: 'system',
