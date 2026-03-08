@@ -72,20 +72,6 @@ export default function TopNavbar() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    if (showSearch && searchRef.current) searchRef.current.focus();
-  }, [showSearch]);
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
