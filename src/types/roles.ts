@@ -9,7 +9,8 @@ export type UserRole =
   | 'radiologist'
   | 'ot_coordinator'
   | 'inventory_manager'
-  | 'emergency';
+  | 'emergency'
+  | 'hr_manager';
 
 export interface User {
   id: string;
