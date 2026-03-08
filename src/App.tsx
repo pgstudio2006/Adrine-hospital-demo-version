@@ -287,6 +287,17 @@ const HR_PAGES: Record<string, React.ComponentType> = {
   '/hr/reports': HRReports,
 };
 
+const SCHEDULING_PAGES: Record<string, React.ComponentType> = {
+  '/scheduling': SchedulingDashboard,
+  '/scheduling/book': SchedulingBook,
+  '/scheduling/calendar': SchedulingCalendar,
+  '/scheduling/doctors': SchedulingDoctors,
+  '/scheduling/resources': SchedulingResources,
+  '/scheduling/waitlist': SchedulingWaitlist,
+  '/scheduling/teleconsult': SchedulingTeleconsult,
+  '/scheduling/reports': SchedulingReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
