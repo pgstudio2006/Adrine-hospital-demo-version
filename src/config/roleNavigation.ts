@@ -120,6 +120,17 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'ambulance', label: 'Ambulance', path: '/emergency/ambulance' },
     { key: 'reports', label: 'Reports', path: '/emergency/reports' },
   ],
+  hr_manager: [
+    { key: 'dashboard', label: 'Dashboard', path: '/hr' },
+    { key: 'staff', label: 'Staff Profiles', path: '/hr/staff' },
+    { key: 'scheduling', label: 'Scheduling', path: '/hr/scheduling' },
+    { key: 'attendance', label: 'Attendance', path: '/hr/attendance' },
+    { key: 'leave', label: 'Leave', path: '/hr/leave' },
+    { key: 'credentials', label: 'Credentials', path: '/hr/credentials' },
+    { key: 'training', label: 'Training', path: '/hr/training' },
+    { key: 'performance', label: 'Performance', path: '/hr/performance' },
+    { key: 'reports', label: 'Reports', path: '/hr/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
@@ -134,4 +145,5 @@ export const ROLE_BASE_PATH: Record<UserRole, string> = {
   ot_coordinator: '/ot',
   inventory_manager: '/inventory',
   emergency: '/emergency',
+  hr_manager: '/hr',
 };

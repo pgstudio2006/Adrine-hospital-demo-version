@@ -128,6 +128,17 @@ import EmergencyMLC from "@/pages/emergency/EmergencyMLC";
 import EmergencyAmbulance from "@/pages/emergency/EmergencyAmbulance";
 import EmergencyReports from "@/pages/emergency/EmergencyReports";
 
+// HR pages
+import HRDashboard from "@/pages/hr/HRDashboard";
+import HRStaff from "@/pages/hr/HRStaff";
+import HRScheduling from "@/pages/hr/HRScheduling";
+import HRAttendance from "@/pages/hr/HRAttendance";
+import HRLeave from "@/pages/hr/HRLeave";
+import HRCredentials from "@/pages/hr/HRCredentials";
+import HRTraining from "@/pages/hr/HRTraining";
+import HRPerformance from "@/pages/hr/HRPerformance";
+import HRReports from "@/pages/hr/HRReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -254,6 +265,18 @@ const EMERGENCY_PAGES: Record<string, React.ComponentType> = {
   '/emergency/reports': EmergencyReports,
 };
 
+const HR_PAGES: Record<string, React.ComponentType> = {
+  '/hr': HRDashboard,
+  '/hr/staff': HRStaff,
+  '/hr/scheduling': HRScheduling,
+  '/hr/attendance': HRAttendance,
+  '/hr/leave': HRLeave,
+  '/hr/credentials': HRCredentials,
+  '/hr/training': HRTraining,
+  '/hr/performance': HRPerformance,
+  '/hr/reports': HRReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -354,8 +377,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* HR routes — fully built */}
+      {Object.entries(HR_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && user.role !== 'hr_manager' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -364,7 +394,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path] && !HR_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
