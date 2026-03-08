@@ -23,6 +23,16 @@ import DoctorPatientProfile from "@/pages/doctor/DoctorPatientProfile";
 import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
 import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 
+// Reception pages
+import ReceptionDashboard from "@/pages/reception/ReceptionDashboard";
+import ReceptionRegistration from "@/pages/reception/ReceptionRegistration";
+import ReceptionAppointments from "@/pages/reception/ReceptionAppointments";
+import ReceptionCheckIn from "@/pages/reception/ReceptionCheckIn";
+import ReceptionQueue from "@/pages/reception/ReceptionQueue";
+import ReceptionBilling from "@/pages/reception/ReceptionBilling";
+import ReceptionBeds from "@/pages/reception/ReceptionBeds";
+import ReceptionIPD from "@/pages/reception/ReceptionIPD";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
@@ -33,6 +43,17 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/labs': DoctorLabs,
   '/doctor/ipd': DoctorIPD,
   '/doctor/analytics': DoctorAnalytics,
+};
+
+const RECEPTION_PAGES: Record<string, React.ComponentType> = {
+  '/reception': ReceptionDashboard,
+  '/reception/registration': ReceptionRegistration,
+  '/reception/appointments': ReceptionAppointments,
+  '/reception/checkin': ReceptionCheckIn,
+  '/reception/queue': ReceptionQueue,
+  '/reception/billing': ReceptionBilling,
+  '/reception/beds': ReceptionBeds,
+  '/reception/ipd': ReceptionIPD,
 };
 
 function AppRoutes() {
@@ -64,8 +85,15 @@ function AppRoutes() {
       <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
       <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
-      {/* Dashboard route for non-doctor roles */}
-      {user.role !== 'doctor' && (
+      {/* Reception routes — fully built */}
+      {Object.entries(RECEPTION_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
+      {/* Dashboard route for other roles */}
+      {user.role !== 'doctor' && user.role !== 'receptionist' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -74,7 +102,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
