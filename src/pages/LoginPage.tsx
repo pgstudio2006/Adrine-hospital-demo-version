@@ -4,7 +4,7 @@ import { UserRole, ROLE_LABELS } from '@/types/roles';
 import { motion } from 'framer-motion';
 import { 
   Shield, Stethoscope, Heart, UserCheck, 
-  FlaskConical, Pill, CreditCard, ScanLine 
+  FlaskConical, Pill, CreditCard, ScanLine, Scissors
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,7 @@ const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
   pharmacist: <Pill className="w-6 h-6" />,
   billing: <CreditCard className="w-6 h-6" />,
   radiologist: <ScanLine className="w-6 h-6" />,
+  ot_coordinator: <Scissors className="w-6 h-6" />,
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
