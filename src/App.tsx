@@ -106,6 +106,17 @@ const LAB_PAGES: Record<string, React.ComponentType> = {
   '/lab/reports': LabReports,
 };
 
+const PHARMACY_PAGES: Record<string, React.ComponentType> = {
+  '/pharmacy': PharmacyDashboard,
+  '/pharmacy/prescriptions': PharmacyPrescriptions,
+  '/pharmacy/inventory': PharmacyInventory,
+  '/pharmacy/drugs': PharmacyDrugs,
+  '/pharmacy/billing': PharmacyBilling,
+  '/pharmacy/suppliers': PharmacySuppliers,
+  '/pharmacy/purchase': PharmacyPurchase,
+  '/pharmacy/queries': PharmacyQueries,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
