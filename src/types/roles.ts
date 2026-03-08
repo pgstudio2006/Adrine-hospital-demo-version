@@ -97,6 +97,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   hr_manager: [
     'dashboard', 'reports', 'settings',
   ],
+  scheduler: [
+    'dashboard', 'appointments', 'patients', 'reports',
+  ],
 };
 
 export function hasAccess(role: UserRole, module: ModuleKey): boolean {
