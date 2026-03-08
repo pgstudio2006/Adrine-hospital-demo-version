@@ -11,6 +11,7 @@ import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOr
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
 import ConsultationRightPanel from './consultation/ConsultationRightPanel';
 import PrescriptionPreview from './consultation/PrescriptionPreview';
+import ConsultationAIScribe from './consultation/ConsultationAIScribe';
 import { useHospital } from '@/stores/hospitalStore';
 import { useAuth } from '@/contexts/AuthContext';
 
