@@ -62,6 +62,13 @@ import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
 import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
 import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
 
+// Radiology pages
+import RadiologyDashboard from "@/pages/radiology/RadiologyDashboard";
+import RadiologyOrders from "@/pages/radiology/RadiologyOrders";
+import RadiologyWorklist from "@/pages/radiology/RadiologyWorklist";
+import RadiologyReports from "@/pages/radiology/RadiologyReports";
+import RadiologySettings from "@/pages/radiology/RadiologySettings";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
