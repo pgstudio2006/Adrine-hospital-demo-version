@@ -190,12 +190,13 @@ export default function OTPreOp() {
               <div className="mt-6 pt-4 border-t border-border/40">
                 <p className="text-xs font-medium tracking-[0.1em] uppercase text-muted-foreground mb-3">WHO Surgical Safety Checklist</p>
                 <div className="grid grid-cols-3 gap-3">
-                  {(['sign_in', 'time_out', 'completed'] as const).map((phase, i) => {
+                  {(['sign_in', 'time_out', 'sign_out'] as const).map((phase, i) => {
                     const labels = ['Sign-In (Before Anesthesia)', 'Time-Out (Before Incision)', 'Sign-Out (Before Leaving OT)'];
-                    const isActive = phase === activeCase.whoPhase;
-                    const isDone = activeCase.whoPhase === 'completed' || 
-                      (activeCase.whoPhase === 'time_out' && i === 0) ||
-                      (activeCase.whoPhase === 'completed' && i <= 1);
+                    const phaseOrder = { pending: 0, sign_in: 1, time_out: 2, completed: 3 };
+                    const currentOrder = phaseOrder[activeCase.whoPhase];
+                    const thisOrder = i + 1;
+                    const isActive = thisOrder === currentOrder;
+                    const isDone = thisOrder < currentOrder;
                     return (
                       <div key={phase} className={`p-3 rounded-lg border text-center ${isActive ? 'border-info/40 bg-info/5' : isDone ? 'border-success/40 bg-success/5' : 'border-border/60'}`}>
                         {isDone ? (
