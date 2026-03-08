@@ -117,6 +117,17 @@ import InventoryAdjustments from "@/pages/inventory/InventoryAdjustments";
 import InventoryEquipment from "@/pages/inventory/InventoryEquipment";
 import InventoryReports from "@/pages/inventory/InventoryReports";
 
+// Emergency pages
+import EmergencyDashboard from "@/pages/emergency/EmergencyDashboard";
+import EmergencyTriage from "@/pages/emergency/EmergencyTriage";
+import EmergencyCases from "@/pages/emergency/EmergencyCases";
+import EmergencyTreatment from "@/pages/emergency/EmergencyTreatment";
+import EmergencyOrders from "@/pages/emergency/EmergencyOrders";
+import EmergencyObservation from "@/pages/emergency/EmergencyObservation";
+import EmergencyMLC from "@/pages/emergency/EmergencyMLC";
+import EmergencyAmbulance from "@/pages/emergency/EmergencyAmbulance";
+import EmergencyReports from "@/pages/emergency/EmergencyReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
