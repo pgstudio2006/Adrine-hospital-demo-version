@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export default function DialysisBilling() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setShowInvoice(false)}>Cancel</Button>
-              <Button onClick={() => setShowInvoice(false)}>Generate Invoice</Button>
+              <Button onClick={() => { setShowInvoice(false); toast.success("Invoice generated successfully"); }}>Generate Invoice</Button>
             </div>
           </DialogContent>
         </Dialog>

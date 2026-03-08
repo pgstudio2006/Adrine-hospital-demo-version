@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -186,7 +187,7 @@ export default function PharmacyDrugs() {
             <div><Label>Known Interactions</Label><Textarea placeholder="Comma-separated drug names..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-              <Button onClick={() => setShowAdd(false)}>Save Drug</Button>
+              <Button onClick={() => { setShowAdd(false); toast.success("Drug added to formulary"); }}>Save Drug</Button>
             </div>
           </div>
         </DialogContent>

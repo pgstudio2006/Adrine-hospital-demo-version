@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -216,7 +217,7 @@ export default function BillingPayments() {
             <div><Label>Notes</Label><Textarea placeholder="Payment notes..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowRecord(false)}>Cancel</Button>
-              <Button onClick={() => setShowRecord(false)}>Record Payment</Button>
+              <Button onClick={() => { setShowRecord(false); toast.success("Payment recorded successfully"); }}>Record Payment</Button>
             </div>
           </div>
         </DialogContent>

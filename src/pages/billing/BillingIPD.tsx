@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -292,7 +293,7 @@ export default function BillingIPD() {
             <div><Label>Notes</Label><Textarea placeholder="Optional notes..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowDeposit(false)}>Cancel</Button>
-              <Button onClick={() => setShowDeposit(false)}>Record Deposit</Button>
+              <Button onClick={() => { setShowDeposit(false); toast.success("Deposit recorded successfully"); }}>Record Deposit</Button>
             </div>
           </div>
         </DialogContent>

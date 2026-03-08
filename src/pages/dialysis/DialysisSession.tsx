@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -289,7 +290,7 @@ export default function DialysisSession() {
                     <Label className="text-xs">Technician Notes</Label>
                     <Textarea className="mt-1" placeholder="Technician notes..." defaultValue="Machine HD-01 functioned normally. AV fistula access was uneventful. Dialyzer performance adequate. Venous pressure stable throughout." />
                   </div>
-                  <Button className="w-full"><CheckCircle className="w-4 h-4 mr-2" /> Complete Session & Generate Summary</Button>
+                  <Button className="w-full" onClick={() => toast.success("Session completed — summary generated")}><CheckCircle className="w-4 h-4 mr-2" /> Complete Session & Generate Summary</Button>
                 </div>
               </div>
             </CardContent>

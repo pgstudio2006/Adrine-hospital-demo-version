@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -246,7 +247,7 @@ export default function RadiologySettings() {
             <div><Label>Preparation Instructions</Label><Textarea placeholder="Patient preparation steps..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddProc(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddProc(false)}>Save Procedure</Button>
+              <Button onClick={() => { setShowAddProc(false); toast.success("Procedure saved successfully"); }}>Save Procedure</Button>
             </div>
           </div>
         </DialogContent>
@@ -278,7 +279,7 @@ export default function RadiologySettings() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddEq(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddEq(false)}>Register</Button>
+              <Button onClick={() => { setShowAddEq(false); toast.success("Equipment registered successfully"); }}>Register</Button>
             </div>
           </div>
         </DialogContent>

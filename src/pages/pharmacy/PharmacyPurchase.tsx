@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,7 +145,7 @@ export default function PharmacyPurchase() {
                   </Table>
                   <div className="flex justify-end mt-2 font-bold">Total: ₹{selected.total.toLocaleString()}</div>
                 </div>
-                {selected.status === "Shipped" && <Button className="w-full" onClick={() => setSelected(null)}>Mark as Delivered</Button>}
+                {selected.status === "Shipped" && <Button className="w-full" onClick={() => { setSelected(null); toast.success("Order marked as delivered"); }}>Mark as Delivered</Button>}
               </div>
             </>
           )}
@@ -181,7 +182,7 @@ export default function PharmacyPurchase() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button onClick={() => setShowCreate(false)}>Create Order</Button>
+              <Button onClick={() => { setShowCreate(false); toast.success("Purchase order created"); }}>Create Order</Button>
             </div>
           </div>
         </DialogContent>

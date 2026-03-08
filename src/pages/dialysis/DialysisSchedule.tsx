@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,7 +150,7 @@ export default function DialysisSchedule() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setShowNewSession(false)}>Cancel</Button>
-              <Button onClick={() => setShowNewSession(false)}>Create Schedule</Button>
+              <Button onClick={() => { setShowNewSession(false); toast.success("Dialysis schedule created successfully"); }}>Create Schedule</Button>
             </div>
           </DialogContent>
         </Dialog>

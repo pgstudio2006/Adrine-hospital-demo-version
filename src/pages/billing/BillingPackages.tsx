@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -247,7 +248,7 @@ export default function BillingPackages() {
             <div><Label>Add Services</Label><Input placeholder="Search and add services..." /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddPkg(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddPkg(false)}>Create Package</Button>
+              <Button onClick={() => { setShowAddPkg(false); toast.success("Package created successfully"); }}>Create Package</Button>
             </div>
           </div>
         </DialogContent>

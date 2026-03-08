@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,7 @@ export default function PharmacySuppliers() {
             <div><Label>Drug Categories Supplied</Label><Input placeholder="Comma-separated categories" /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-              <Button onClick={() => setShowAdd(false)}>Save Supplier</Button>
+              <Button onClick={() => { setShowAdd(false); toast.success("Supplier saved successfully"); }}>Save Supplier</Button>
             </div>
           </div>
         </DialogContent>
