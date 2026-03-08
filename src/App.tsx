@@ -245,6 +245,9 @@ const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept/insurance': BillingInsurance,
   '/billing-dept/finance': BillingFinance,
   '/billing-dept/reports': BillingReports,
+  '/billing-dept/health-plans': BillingHealthPlans,
+  '/billing-dept/gst': BillingGST,
+  '/billing-dept/tpa-charges': BillingTPACharges,
 };
 
 const OT_PAGES: Record<string, React.ComponentType> = {
