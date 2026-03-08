@@ -139,6 +139,16 @@ import HRTraining from "@/pages/hr/HRTraining";
 import HRPerformance from "@/pages/hr/HRPerformance";
 import HRReports from "@/pages/hr/HRReports";
 
+// Scheduling pages
+import SchedulingDashboard from "@/pages/scheduling/SchedulingDashboard";
+import SchedulingBook from "@/pages/scheduling/SchedulingBook";
+import SchedulingCalendar from "@/pages/scheduling/SchedulingCalendar";
+import SchedulingDoctors from "@/pages/scheduling/SchedulingDoctors";
+import SchedulingResources from "@/pages/scheduling/SchedulingResources";
+import SchedulingWaitlist from "@/pages/scheduling/SchedulingWaitlist";
+import SchedulingTeleconsult from "@/pages/scheduling/SchedulingTeleconsult";
+import SchedulingReports from "@/pages/scheduling/SchedulingReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -277,6 +287,17 @@ const HR_PAGES: Record<string, React.ComponentType> = {
   '/hr/reports': HRReports,
 };
 
+const SCHEDULING_PAGES: Record<string, React.ComponentType> = {
+  '/scheduling': SchedulingDashboard,
+  '/scheduling/book': SchedulingBook,
+  '/scheduling/calendar': SchedulingCalendar,
+  '/scheduling/doctors': SchedulingDoctors,
+  '/scheduling/resources': SchedulingResources,
+  '/scheduling/waitlist': SchedulingWaitlist,
+  '/scheduling/teleconsult': SchedulingTeleconsult,
+  '/scheduling/reports': SchedulingReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -384,8 +405,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Scheduling routes — fully built */}
+      {Object.entries(SCHEDULING_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && user.role !== 'hr_manager' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && user.role !== 'hr_manager' && user.role !== 'scheduler' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -394,7 +422,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path] && !HR_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path] && !HR_PAGES[t.path] && !SCHEDULING_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>

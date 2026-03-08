@@ -10,7 +10,8 @@ export type UserRole =
   | 'ot_coordinator'
   | 'inventory_manager'
   | 'emergency'
-  | 'hr_manager';
+  | 'hr_manager'
+  | 'scheduler';
 
 export interface User {
   id: string;
@@ -33,6 +34,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   inventory_manager: 'Inventory Manager',
   emergency: 'Emergency / ER',
   hr_manager: 'HR & Staff',
+  scheduler: 'Scheduling',
 };
 
 export type ModuleKey =
@@ -94,6 +96,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   ],
   hr_manager: [
     'dashboard', 'reports', 'settings',
+  ],
+  scheduler: [
+    'dashboard', 'appointments', 'patients', 'reports',
   ],
 };
 
