@@ -139,6 +139,16 @@ import HRTraining from "@/pages/hr/HRTraining";
 import HRPerformance from "@/pages/hr/HRPerformance";
 import HRReports from "@/pages/hr/HRReports";
 
+// Scheduling pages
+import SchedulingDashboard from "@/pages/scheduling/SchedulingDashboard";
+import SchedulingBook from "@/pages/scheduling/SchedulingBook";
+import SchedulingCalendar from "@/pages/scheduling/SchedulingCalendar";
+import SchedulingDoctors from "@/pages/scheduling/SchedulingDoctors";
+import SchedulingResources from "@/pages/scheduling/SchedulingResources";
+import SchedulingWaitlist from "@/pages/scheduling/SchedulingWaitlist";
+import SchedulingTeleconsult from "@/pages/scheduling/SchedulingTeleconsult";
+import SchedulingReports from "@/pages/scheduling/SchedulingReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
