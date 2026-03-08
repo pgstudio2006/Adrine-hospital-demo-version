@@ -52,6 +52,16 @@ import LabEntry from "@/pages/lab/LabEntry";
 import LabVerification from "@/pages/lab/LabVerification";
 import LabReports from "@/pages/lab/LabReports";
 
+// Pharmacy pages
+import PharmacyDashboard from "@/pages/pharmacy/PharmacyDashboard";
+import PharmacyPrescriptions from "@/pages/pharmacy/PharmacyPrescriptions";
+import PharmacyInventory from "@/pages/pharmacy/PharmacyInventory";
+import PharmacyDrugs from "@/pages/pharmacy/PharmacyDrugs";
+import PharmacyBilling from "@/pages/pharmacy/PharmacyBilling";
+import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
+import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
+import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
