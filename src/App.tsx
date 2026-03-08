@@ -61,6 +61,7 @@ import PharmacyBilling from "@/pages/pharmacy/PharmacyBilling";
 import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
 import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
 import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
+import PharmacyScheduleH from "@/pages/pharmacy/PharmacyScheduleH";
 
 // Radiology pages
 import RadiologyDashboard from "@/pages/radiology/RadiologyDashboard";
@@ -82,6 +83,8 @@ import AdminMIS from "@/pages/admin/AdminMIS";
 import AdminAudit from "@/pages/admin/AdminAudit";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminGeoIntelligence from "@/pages/admin/AdminGeoIntelligence";
+import AdminDoctorSharing from "@/pages/admin/AdminDoctorSharing";
+import AdminPhonebook from "@/pages/admin/AdminPhonebook";
 
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
@@ -93,6 +96,9 @@ import BillingRevenue from "@/pages/billing/BillingRevenue";
 import BillingInsurance from "@/pages/billing/BillingInsurance";
 import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
+import BillingHealthPlans from "@/pages/billing/BillingHealthPlans";
+import BillingGST from "@/pages/billing/BillingGST";
+import BillingTPACharges from "@/pages/billing/BillingTPACharges";
 
 // OT pages
 import OTDashboard from "@/pages/ot/OTDashboard";
@@ -163,6 +169,8 @@ const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin/mis': AdminMIS,
   '/admin/audit': AdminAudit,
   '/admin/settings': AdminSettings,
+  '/admin/doctor-sharing': AdminDoctorSharing,
+  '/admin/phonebook': AdminPhonebook,
 };
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
@@ -216,6 +224,7 @@ const PHARMACY_PAGES: Record<string, React.ComponentType> = {
   '/pharmacy/suppliers': PharmacySuppliers,
   '/pharmacy/purchase': PharmacyPurchase,
   '/pharmacy/queries': PharmacyQueries,
+  '/pharmacy/schedule-h': PharmacyScheduleH,
 };
 
 const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
@@ -236,6 +245,9 @@ const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept/insurance': BillingInsurance,
   '/billing-dept/finance': BillingFinance,
   '/billing-dept/reports': BillingReports,
+  '/billing-dept/health-plans': BillingHealthPlans,
+  '/billing-dept/gst': BillingGST,
+  '/billing-dept/tpa-charges': BillingTPACharges,
 };
 
 const OT_PAGES: Record<string, React.ComponentType> = {
