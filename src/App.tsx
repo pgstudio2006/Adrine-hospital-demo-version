@@ -61,6 +61,7 @@ import PharmacyBilling from "@/pages/pharmacy/PharmacyBilling";
 import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
 import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
 import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
+import PharmacyScheduleH from "@/pages/pharmacy/PharmacyScheduleH";
 
 // Radiology pages
 import RadiologyDashboard from "@/pages/radiology/RadiologyDashboard";
