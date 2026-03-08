@@ -109,6 +109,17 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'equipment', label: 'Equipment', path: '/inventory/equipment' },
     { key: 'reports', label: 'Reports', path: '/inventory/reports' },
   ],
+  emergency: [
+    { key: 'dashboard', label: 'Dashboard', path: '/emergency' },
+    { key: 'triage', label: 'Triage', path: '/emergency/triage' },
+    { key: 'cases', label: 'Cases', path: '/emergency/cases' },
+    { key: 'treatment', label: 'Treatment', path: '/emergency/treatment' },
+    { key: 'orders', label: 'Orders', path: '/emergency/orders' },
+    { key: 'observation', label: 'Observation', path: '/emergency/observation' },
+    { key: 'mlc', label: 'MLC', path: '/emergency/mlc' },
+    { key: 'ambulance', label: 'Ambulance', path: '/emergency/ambulance' },
+    { key: 'reports', label: 'Reports', path: '/emergency/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
