@@ -131,6 +131,16 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'performance', label: 'Performance', path: '/hr/performance' },
     { key: 'reports', label: 'Reports', path: '/hr/reports' },
   ],
+  scheduler: [
+    { key: 'dashboard', label: 'Dashboard', path: '/scheduling' },
+    { key: 'book', label: 'Book', path: '/scheduling/book' },
+    { key: 'calendar', label: 'Calendar', path: '/scheduling/calendar' },
+    { key: 'doctors', label: 'Doctors', path: '/scheduling/doctors' },
+    { key: 'resources', label: 'Resources', path: '/scheduling/resources' },
+    { key: 'waitlist', label: 'Waitlist', path: '/scheduling/waitlist' },
+    { key: 'teleconsult', label: 'Teleconsult', path: '/scheduling/teleconsult' },
+    { key: 'reports', label: 'Reports', path: '/scheduling/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
