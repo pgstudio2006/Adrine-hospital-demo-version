@@ -172,8 +172,8 @@ export default function ReceptionRegistration() {
   // Duplicate phone detection
   const duplicatePhoneWarning = useMemo(() => {
     if (!formData.phone || formData.phone.length < 10) return null;
-    return existingPatients.find(p => p.phone === formData.phone) || null;
-  }, [formData.phone]);
+    return storePatients.find(p => p.phone === formData.phone) || null;
+  }, [formData.phone, storePatients]);
 
   const newUHID = `UHID-${(240000 + existingPatients.length + 1).toString()}`;
   const calculatedAge = formData.dob ? Math.floor((Date.now() - new Date(formData.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
