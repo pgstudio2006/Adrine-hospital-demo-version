@@ -86,6 +86,14 @@ import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminGeoIntelligence from "@/pages/admin/AdminGeoIntelligence";
 import AdminDoctorSharing from "@/pages/admin/AdminDoctorSharing";
 import AdminPhonebook from "@/pages/admin/AdminPhonebook";
+import AdminMortalityAnalytics from "@/pages/admin/AdminMortalityAnalytics";
+import AdminAIWorkflow from "@/pages/admin/AdminAIWorkflow";
+import AdminDiseaseMapping from "@/pages/admin/AdminDiseaseMapping";
+import AdminDataMining from "@/pages/admin/AdminDataMining";
+import AdminCommandCenter from "@/pages/admin/AdminCommandCenter";
+import AdminKaizen from "@/pages/admin/AdminKaizen";
+import AdminRevenueCycle from "@/pages/admin/AdminRevenueCycle";
+import AdminTreatmentSuccess from "@/pages/admin/AdminTreatmentSuccess";
 
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
@@ -170,6 +178,14 @@ const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin': AdminDashboard,
+  '/admin/command-center': AdminCommandCenter,
+  '/admin/mortality': AdminMortalityAnalytics,
+  '/admin/ai-workflow': AdminAIWorkflow,
+  '/admin/disease-mapping': AdminDiseaseMapping,
+  '/admin/data-mining': AdminDataMining,
+  '/admin/kaizen': AdminKaizen,
+  '/admin/revenue-cycle': AdminRevenueCycle,
+  '/admin/treatment-success': AdminTreatmentSuccess,
   '/admin/staff': AdminStaff,
   '/admin/departments': AdminDepartments,
   '/admin/finance': AdminFinance,
