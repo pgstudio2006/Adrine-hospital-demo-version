@@ -69,6 +69,14 @@ import RadiologyWorklist from "@/pages/radiology/RadiologyWorklist";
 import RadiologyReports from "@/pages/radiology/RadiologyReports";
 import RadiologySettings from "@/pages/radiology/RadiologySettings";
 
+// Billing pages
+import BillingDashboard from "@/pages/billing/BillingDashboard";
+import BillingInvoices from "@/pages/billing/BillingInvoices";
+import BillingPayments from "@/pages/billing/BillingPayments";
+import BillingRevenue from "@/pages/billing/BillingRevenue";
+import BillingInsurance from "@/pages/billing/BillingInsurance";
+import BillingReports from "@/pages/billing/BillingReports";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
