@@ -11,6 +11,7 @@ import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOr
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
 import ConsultationRightPanel from './consultation/ConsultationRightPanel';
 import PrescriptionPreview from './consultation/PrescriptionPreview';
+import ConsultationAIScribe from './consultation/ConsultationAIScribe';
 import { useHospital } from '@/stores/hospitalStore';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -52,6 +53,27 @@ export default function DoctorConsultation() {
   const [viewMode, setViewMode] = useState<'Digital' | 'Tablet'>('Digital');
   const [leftTab, setLeftTab] = useState<'clinical' | 'orders'>('clinical');
   const [showPreview, setShowPreview] = useState(false);
+  const [showAIScribe, setShowAIScribe] = useState(false);
+
+  const handleAIScribeApply = (result: any) => {
+    if (result.complaints.length > 0) setComplaints(result.complaints);
+    if (result.diagnoses.length > 0) setDiagnoses(result.diagnoses);
+    if (result.medications.length > 0) setMedications(result.medications);
+    if (result.labTests.length > 0) setLabTests(result.labTests);
+    if (result.radiologyOrders.length > 0) setRadiologyOrders(result.radiologyOrders);
+    if (result.advice) setAdvice(result.advice);
+    if (result.followUpDays) setFollowUpDays(result.followUpDays);
+    // Apply vitals if present
+    if (result.vitals) {
+      setVitals(prev => {
+        const updated = { ...prev };
+        Object.entries(result.vitals).forEach(([k, v]) => {
+          if (v && typeof v === 'string' && v.trim()) (updated as any)[k] = v;
+        });
+        return updated;
+      });
+    }
+  };
 
   const handleSaveConsultation = () => {
     saveConsultation({
@@ -112,7 +134,7 @@ export default function DoctorConsultation() {
           <Button size="sm" variant="outline" className="gap-1.5">
             <Mic className="w-3.5 h-3.5" /> Voice Dictation
           </Button>
-          <Button size="sm" className="gap-1.5 bg-foreground text-background hover:bg-foreground/90">
+          <Button size="sm" className="gap-1.5 bg-foreground text-background hover:bg-foreground/90" onClick={() => setShowAIScribe(true)}>
             <Sparkles className="w-3.5 h-3.5" /> AI Scribe
           </Button>
         </div>
@@ -170,6 +192,14 @@ export default function DoctorConsultation() {
           />
         </motion.div>
       </div>
+
+      {/* AI Scribe Dialog */}
+      <ConsultationAIScribe
+        open={showAIScribe}
+        onClose={() => setShowAIScribe(false)}
+        onApply={handleAIScribeApply}
+        patientName={patientName}
+      />
 
       {/* Prescription Preview Dialog */}
       <PrescriptionPreview
