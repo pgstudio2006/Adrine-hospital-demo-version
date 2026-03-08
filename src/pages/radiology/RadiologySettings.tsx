@@ -247,7 +247,7 @@ export default function RadiologySettings() {
             <div><Label>Preparation Instructions</Label><Textarea placeholder="Patient preparation steps..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddProc(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddProc(false)}>Save Procedure</Button>
+              <Button onClick={() => { setShowAddProc(false); toast.success("Procedure saved successfully"); }}>Save Procedure</Button>
             </div>
           </div>
         </DialogContent>
