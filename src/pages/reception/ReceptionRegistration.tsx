@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useHospital } from '@/stores/hospitalStore';
 import {
   Search, UserPlus, Phone, CreditCard, Shield, ChevronRight, X, Check, User, FileText,
   AlertTriangle, Upload, Heart, MapPin, Camera, Scale, Merge, GitMerge,
