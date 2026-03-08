@@ -51,6 +51,7 @@ export default function DoctorConsultation() {
   const [followUpUnit, setFollowUpUnit] = useState('Days');
   const [viewMode, setViewMode] = useState<'Digital' | 'Tablet'>('Digital');
   const [leftTab, setLeftTab] = useState<'clinical' | 'orders'>('clinical');
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleSaveConsultation = () => {
     saveConsultation({
