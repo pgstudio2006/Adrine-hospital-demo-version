@@ -145,7 +145,7 @@ export default function PharmacyPurchase() {
                   </Table>
                   <div className="flex justify-end mt-2 font-bold">Total: ₹{selected.total.toLocaleString()}</div>
                 </div>
-                {selected.status === "Shipped" && <Button className="w-full" onClick={() => setSelected(null)}>Mark as Delivered</Button>}
+                {selected.status === "Shipped" && <Button className="w-full" onClick={() => { setSelected(null); toast.success("Order marked as delivered"); }}>Mark as Delivered</Button>}
               </div>
             </>
           )}
