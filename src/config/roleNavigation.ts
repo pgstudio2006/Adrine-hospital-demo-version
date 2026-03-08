@@ -147,6 +147,16 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'teleconsult', label: 'Teleconsult', path: '/scheduling/teleconsult' },
     { key: 'reports', label: 'Reports', path: '/scheduling/reports' },
   ],
+  dialysis_tech: [
+    { key: 'dashboard', label: 'Dashboard', path: '/dialysis' },
+    { key: 'patients', label: 'Patients', path: '/dialysis/patients' },
+    { key: 'schedule', label: 'Schedule', path: '/dialysis/schedule' },
+    { key: 'session', label: 'Session / Flow Chart', path: '/dialysis/session' },
+    { key: 'machines', label: 'Machines', path: '/dialysis/machines' },
+    { key: 'consumables', label: 'Consumables', path: '/dialysis/consumables' },
+    { key: 'billing', label: 'Billing & Packages', path: '/dialysis/billing' },
+    { key: 'reports', label: 'Reports', path: '/dialysis/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
