@@ -10,6 +10,8 @@ import ConsultationExamination, { type ExamFindings } from './consultation/Consu
 import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOrder } from './consultation/ConsultationOrders';
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
 import ConsultationRightPanel from './consultation/ConsultationRightPanel';
+import { useHospital } from '@/stores/hospitalStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
