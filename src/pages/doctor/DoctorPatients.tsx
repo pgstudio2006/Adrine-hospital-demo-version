@@ -99,141 +99,40 @@ export default function DoctorPatients() {
         </div>
       </motion.div>
 
-      {/* Patient List & Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* List */}
-        <motion.div {...fadeIn(2)} className="lg:col-span-2 border rounded-xl bg-card overflow-hidden">
-          <div className="divide-y">
-            {filtered.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => { setSelectedPatient(p); navigate(`/doctor/patients/${p.id}`); }}
-                className={`flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 transition-colors cursor-pointer ${
-                  selectedPatient?.id === p.id ? 'bg-accent/70' : ''
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-sm font-semibold">{p.name.split(' ').map(n => n[0]).join('')}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold truncate">{p.name}</p>
-                    <span className="text-[10px] font-mono text-muted-foreground">{p.uhid}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {p.age}y/{p.gender} · {p.diagnosis}
-                  </p>
-                </div>
-                <div className="text-right shrink-0 flex items-center gap-2">
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyles[p.status]}`}>
-                    {p.status}
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </div>
+      {/* Patient List — full width */}
+      <motion.div {...fadeIn(2)} className="border rounded-xl bg-card overflow-hidden">
+        <div className="divide-y">
+          {filtered.map((p) => (
+            <div
+              key={p.id}
+              onClick={() => navigate(`/doctor/patients/${p.id}`)}
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 transition-colors cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <span className="text-sm font-semibold">{p.name.split(' ').map(n => n[0]).join('')}</span>
               </div>
-            ))}
-            {filtered.length === 0 && (
-              <div className="py-12 text-center text-sm text-muted-foreground">No patients match your search.</div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Detail Panel */}
-        <motion.div {...fadeIn(3)} className="border rounded-xl bg-card">
-          {selectedPatient ? (
-            <div className="p-5 space-y-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-lg font-bold">{selectedPatient.name.split(' ').map(n => n[0]).join('')}</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{selectedPatient.name}</h3>
-                    <p className="text-xs text-muted-foreground">{selectedPatient.uhid} · {selectedPatient.bloodGroup}</p>
-                  </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold truncate">{p.name}</p>
+                  <span className="text-[10px] font-mono text-muted-foreground">{p.uhid}</span>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Full Record</DropdownMenuItem>
-                    <DropdownMenuItem>Write Prescription</DropdownMenuItem>
-                    <DropdownMenuItem>Order Lab Test</DropdownMenuItem>
-                    <DropdownMenuItem>Refer Patient</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {p.age}y/{p.gender} · {p.diagnosis}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Age / Gender</p>
-                  <p className="text-sm font-semibold">{selectedPatient.age}y / {selectedPatient.gender === 'M' ? 'Male' : 'Female'}</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Blood Group</p>
-                  <p className="text-sm font-semibold">{selectedPatient.bloodGroup}</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Total Visits</p>
-                  <p className="text-sm font-semibold">{selectedPatient.visits}</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Status</p>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyles[selectedPatient.status]}`}>
-                    {selectedPatient.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Phone className="w-3.5 h-3.5" /> {selectedPatient.phone}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="w-3.5 h-3.5" /> {selectedPatient.city}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="w-3.5 h-3.5" /> Last visit: {selectedPatient.lastVisit}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Current Diagnosis</p>
-                <p className="text-sm font-medium">{selectedPatient.diagnosis}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Button size="sm" className="w-full gap-1.5">
-                  <FileText className="w-3.5 h-3.5" /> Write Prescription
-                </Button>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <FlaskConical className="w-3 h-3" /> Order Lab
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <Calendar className="w-3 h-3" /> Schedule
-                  </Button>
-                </div>
+              <div className="text-right shrink-0 flex items-center gap-2">
+                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyles[p.status]}`}>
+                  {p.status}
+                </span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-                <FileText className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <p className="text-sm font-medium">Select a patient</p>
-              <p className="text-xs text-muted-foreground mt-1">Click on a patient to view details</p>
-            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">No patients match your search.</div>
           )}
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
-}
-
-function FlaskConical(props: any) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
 }
