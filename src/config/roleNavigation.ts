@@ -72,8 +72,11 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'dashboard', label: 'Dashboard', path: '/billing-dept' },
     { key: 'invoices', label: 'Invoices', path: '/billing-dept/invoices' },
     { key: 'payments', label: 'Payments', path: '/billing-dept/payments' },
+    { key: 'ipd-billing', label: 'IPD Billing', path: '/billing-dept/ipd-billing' },
+    { key: 'packages', label: 'Packages', path: '/billing-dept/packages' },
     { key: 'revenue', label: 'Revenue', path: '/billing-dept/revenue' },
     { key: 'insurance', label: 'Insurance', path: '/billing-dept/insurance' },
+    { key: 'finance', label: 'Finance', path: '/billing-dept/finance' },
     { key: 'reports', label: 'Reports', path: '/billing-dept/reports' },
   ],
   radiologist: [
