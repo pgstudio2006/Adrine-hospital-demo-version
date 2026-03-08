@@ -55,6 +55,7 @@ export default function DoctorPatients() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const navigate = useNavigate();
 
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
