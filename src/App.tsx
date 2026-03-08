@@ -73,8 +73,11 @@ import RadiologySettings from "@/pages/radiology/RadiologySettings";
 import BillingDashboard from "@/pages/billing/BillingDashboard";
 import BillingInvoices from "@/pages/billing/BillingInvoices";
 import BillingPayments from "@/pages/billing/BillingPayments";
+import BillingIPD from "@/pages/billing/BillingIPD";
+import BillingPackages from "@/pages/billing/BillingPackages";
 import BillingRevenue from "@/pages/billing/BillingRevenue";
 import BillingInsurance from "@/pages/billing/BillingInsurance";
+import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
 
 const queryClient = new QueryClient();
@@ -144,8 +147,11 @@ const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept': BillingDashboard,
   '/billing-dept/invoices': BillingInvoices,
   '/billing-dept/payments': BillingPayments,
+  '/billing-dept/ipd-billing': BillingIPD,
+  '/billing-dept/packages': BillingPackages,
   '/billing-dept/revenue': BillingRevenue,
   '/billing-dept/insurance': BillingInsurance,
+  '/billing-dept/finance': BillingFinance,
   '/billing-dept/reports': BillingReports,
 };
 
