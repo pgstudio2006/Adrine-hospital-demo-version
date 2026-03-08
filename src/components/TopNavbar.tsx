@@ -1,9 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_LABELS } from '@/types/roles';
 import { ROLE_TABS } from '@/config/roleNavigation';
-import { Search, Bell, LogOut } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Bell, LogOut, ChevronRight } from 'lucide-react';
 
 export default function TopNavbar() {
   const { user, logout } = useAuth();
@@ -13,47 +11,39 @@ export default function TopNavbar() {
   if (!user) return null;
 
   const tabs = ROLE_TABS[user.role] ?? [];
-  const currentTab = tabs.find(t => location.pathname === t.path) ?? tabs[0];
+
+  // Detect if we're on a sub-page (e.g., /doctor/patients/1)
+  const parentTab = tabs.find(t => t.path !== `/${user.role}` && location.pathname.startsWith(t.path) && location.pathname !== t.path);
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
       <div className="flex items-center h-14 px-5 gap-6">
-        {/* Branding */}
+        {/* Branding with breadcrumb */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 bg-foreground text-background rounded-md flex items-center justify-center font-bold text-xs">
-            A
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-sm tracking-tight">Adrine</span>
-            <span className="text-muted-foreground text-sm">|</span>
-            <span className="text-sm text-muted-foreground font-medium">
-              {ROLE_LABELS[user.role]}
-            </span>
-          </div>
+          <span className="font-bold text-base tracking-tight">Adrine</span>
+          {parentTab && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{parentTab.label}</span>
+            </>
+          )}
         </div>
 
-        {/* Tabs */}
-        <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-hide">
+        {/* Tabs — centered */}
+        <nav className="flex items-center gap-0.5 flex-1 justify-center overflow-x-auto scrollbar-hide">
           {tabs.map(tab => {
-            const isActive = location.pathname === tab.path;
+            const isActive = location.pathname === tab.path || (parentTab?.key === tab.key);
             return (
               <button
                 key={tab.key}
                 onClick={() => navigate(tab.path)}
                 className={`relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap
                   ${isActive
-                    ? 'text-foreground'
+                    ? 'text-foreground bg-accent'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
               >
                 {tab.label}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute inset-x-1 -bottom-[13px] h-0.5 bg-foreground rounded-full"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  />
-                )}
               </button>
             );
           })}
@@ -73,7 +63,7 @@ export default function TopNavbar() {
 
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold">
-              {user.name.charAt(0)}
+              DR
             </div>
             <span className="text-sm font-medium hidden lg:block">{user.name}</span>
           </div>
