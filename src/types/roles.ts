@@ -87,6 +87,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   inventory_manager: [
     'dashboard', 'inventory', 'reports',
   ],
+  emergency: [
+    'dashboard', 'patients', 'opd', 'ipd', 'laboratory', 'radiology', 'pharmacy', 'billing', 'reports',
+  ],
 };
 
 export function hasAccess(role: UserRole, module: ModuleKey): boolean {
