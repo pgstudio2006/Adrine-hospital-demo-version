@@ -35,6 +35,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'ward', label: 'My Ward', path: '/nurse/ward' },
     { key: 'admissions', label: 'Admissions', path: '/nurse/admissions' },
     { key: 'tasks', label: 'Tasks', path: '/nurse/tasks' },
+    { key: 'medications', label: 'Medications', path: '/nurse/medications' },
     { key: 'vitals', label: 'Vitals', path: '/nurse/vitals' },
     { key: 'discharge', label: 'Discharge', path: '/nurse/discharge' },
     { key: 'reports', label: 'Reports', path: '/nurse/reports' },

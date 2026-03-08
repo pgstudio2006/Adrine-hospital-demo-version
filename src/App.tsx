@@ -24,6 +24,16 @@ import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
 import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 import DoctorRadiology from "@/pages/doctor/DoctorRadiology";
 
+// Nurse pages
+import NurseDashboard from "@/pages/nurse/NurseDashboard";
+import NurseWard from "@/pages/nurse/NurseWard";
+import NurseAdmissions from "@/pages/nurse/NurseAdmissions";
+import NurseTasks from "@/pages/nurse/NurseTasks";
+import NurseMedications from "@/pages/nurse/NurseMedications";
+import NurseVitals from "@/pages/nurse/NurseVitals";
+import NurseDischarge from "@/pages/nurse/NurseDischarge";
+import NurseReports from "@/pages/nurse/NurseReports";
+
 // Reception pages
 import ReceptionDashboard from "@/pages/reception/ReceptionDashboard";
 import ReceptionRegistration from "@/pages/reception/ReceptionRegistration";
@@ -45,6 +55,17 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/radiology': DoctorRadiology,
   '/doctor/ipd': DoctorIPD,
   '/doctor/analytics': DoctorAnalytics,
+};
+
+const NURSE_PAGES: Record<string, React.ComponentType> = {
+  '/nurse': NurseDashboard,
+  '/nurse/ward': NurseWard,
+  '/nurse/admissions': NurseAdmissions,
+  '/nurse/tasks': NurseTasks,
+  '/nurse/medications': NurseMedications,
+  '/nurse/vitals': NurseVitals,
+  '/nurse/discharge': NurseDischarge,
+  '/nurse/reports': NurseReports,
 };
 
 const RECEPTION_PAGES: Record<string, React.ComponentType> = {
@@ -87,6 +108,13 @@ function AppRoutes() {
       <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
       <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
+      {/* Nurse routes — fully built */}
+      {Object.entries(NURSE_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Reception routes — fully built */}
       {Object.entries(RECEPTION_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
@@ -95,7 +123,7 @@ function AppRoutes() {
       ))}
 
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -104,7 +132,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
