@@ -81,6 +81,7 @@ import AdminMRD from "@/pages/admin/AdminMRD";
 import AdminMIS from "@/pages/admin/AdminMIS";
 import AdminAudit from "@/pages/admin/AdminAudit";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminGeoIntelligence from "@/pages/admin/AdminGeoIntelligence";
 
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
@@ -207,8 +208,9 @@ function AppRoutes() {
           <AppLayout><Component /></AppLayout>
         } />
       ))}
+      <Route path="/admin/geo-intelligence" element={<AppLayout><AdminGeoIntelligence /></AppLayout>} />
 
-      {/* Doctor routes — fully built */}
+
       {Object.entries(DOCTOR_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
           <AppLayout><Component /></AppLayout>
