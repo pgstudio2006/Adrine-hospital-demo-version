@@ -102,6 +102,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   scheduler: [
     'dashboard', 'appointments', 'patients', 'reports',
   ],
+  dialysis_tech: [
+    'dashboard', 'patients', 'billing', 'inventory', 'reports',
+  ],
 };
 
 export function hasAccess(role: UserRole, module: ModuleKey): boolean {

@@ -39,6 +39,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   emergency: 'ER triage, cases & trauma care',
   hr_manager: 'Staff, attendance & workforce',
   scheduler: 'Appointments & resource scheduling',
+  dialysis_tech: 'Haemodialysis unit & sessions',
 };
 
 export default function LoginPage() {

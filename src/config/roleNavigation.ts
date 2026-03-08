@@ -173,4 +173,5 @@ export const ROLE_BASE_PATH: Record<UserRole, string> = {
   emergency: '/emergency',
   hr_manager: '/hr',
   scheduler: '/scheduling',
+  dialysis_tech: '/dialysis',
 };
