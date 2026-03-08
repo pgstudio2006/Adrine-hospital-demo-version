@@ -95,6 +95,9 @@ import BillingRevenue from "@/pages/billing/BillingRevenue";
 import BillingInsurance from "@/pages/billing/BillingInsurance";
 import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
+import BillingHealthPlans from "@/pages/billing/BillingHealthPlans";
+import BillingGST from "@/pages/billing/BillingGST";
+import BillingTPACharges from "@/pages/billing/BillingTPACharges";
 
 // OT pages
 import OTDashboard from "@/pages/ot/OTDashboard";
