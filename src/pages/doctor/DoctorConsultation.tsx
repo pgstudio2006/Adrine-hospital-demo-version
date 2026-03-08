@@ -10,6 +10,7 @@ import ConsultationExamination, { type ExamFindings } from './consultation/Consu
 import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOrder } from './consultation/ConsultationOrders';
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
 import ConsultationRightPanel from './consultation/ConsultationRightPanel';
+import PrescriptionPreview from './consultation/PrescriptionPreview';
 import { useHospital } from '@/stores/hospitalStore';
 import { useAuth } from '@/contexts/AuthContext';
 

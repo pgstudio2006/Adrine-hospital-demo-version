@@ -186,7 +186,7 @@ export default function PrescriptionPreview({ open, onClose, data }: Props) {
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.5, marginBottom: 8 }}>Diagnosis</div>
                     <ul style={{ listStyleType: 'disc', paddingLeft: 18, fontSize: 13, lineHeight: 1.8 }}>
-                      {data.diagnoses.map(d => <li key={d.id}>{d.text}{d.icdCode ? ` (${d.icdCode})` : ''}</li>)}
+                      {data.diagnoses.map(d => <li key={d.id}>{d.text}{d.code ? ` (${d.code})` : ''}</li>)}
                     </ul>
                   </div>
                 )}
