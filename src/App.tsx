@@ -73,8 +73,11 @@ import RadiologySettings from "@/pages/radiology/RadiologySettings";
 import BillingDashboard from "@/pages/billing/BillingDashboard";
 import BillingInvoices from "@/pages/billing/BillingInvoices";
 import BillingPayments from "@/pages/billing/BillingPayments";
+import BillingIPD from "@/pages/billing/BillingIPD";
+import BillingPackages from "@/pages/billing/BillingPackages";
 import BillingRevenue from "@/pages/billing/BillingRevenue";
 import BillingInsurance from "@/pages/billing/BillingInsurance";
+import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
 
 const queryClient = new QueryClient();
