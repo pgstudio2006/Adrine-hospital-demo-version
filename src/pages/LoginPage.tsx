@@ -18,6 +18,7 @@ const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
   billing: <CreditCard className="w-6 h-6" />,
   radiologist: <ScanLine className="w-6 h-6" />,
   ot_coordinator: <Scissors className="w-6 h-6" />,
+  inventory_manager: <Package className="w-6 h-6" />,
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
