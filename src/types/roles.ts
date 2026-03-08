@@ -36,6 +36,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   emergency: 'Emergency / ER',
   hr_manager: 'HR & Staff',
   scheduler: 'Scheduling',
+  dialysis_tech: 'Dialysis Unit',
 };
 
 export type ModuleKey =
