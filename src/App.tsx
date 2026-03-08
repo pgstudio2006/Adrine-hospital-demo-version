@@ -165,6 +165,7 @@ import DialysisConsumables from "@/pages/dialysis/DialysisConsumables";
 import DialysisBilling from "@/pages/dialysis/DialysisBilling";
 import DialysisReports from "@/pages/dialysis/DialysisReports";
 
+const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin': AdminDashboard,
