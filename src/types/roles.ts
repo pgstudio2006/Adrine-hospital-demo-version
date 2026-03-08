@@ -7,7 +7,8 @@ export type UserRole =
   | 'pharmacist'
   | 'billing'
   | 'radiologist'
-  | 'ot_coordinator';
+  | 'ot_coordinator'
+  | 'inventory_manager';
 
 export interface User {
   id: string;
@@ -27,6 +28,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   billing: 'Billing & Finance',
   radiologist: 'Radiologist',
   ot_coordinator: 'OT Coordinator',
+  inventory_manager: 'Inventory Manager',
 };
 
 export type ModuleKey =
@@ -79,6 +81,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   ],
   ot_coordinator: [
     'dashboard', 'ot_management', 'reports',
+  ],
+  inventory_manager: [
+    'dashboard', 'inventory', 'reports',
   ],
 };
 

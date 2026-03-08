@@ -98,6 +98,17 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'reports', label: 'Reports', path: '/ot/reports' },
     { key: 'analytics', label: 'Analytics', path: '/ot/analytics' },
   ],
+  inventory_manager: [
+    { key: 'dashboard', label: 'Dashboard', path: '/inventory' },
+    { key: 'catalog', label: 'Catalog', path: '/inventory/catalog' },
+    { key: 'stock-entry', label: 'Stock Entry', path: '/inventory/stock-entry' },
+    { key: 'distribution', label: 'Distribution', path: '/inventory/distribution' },
+    { key: 'requisitions', label: 'Requisitions', path: '/inventory/requisitions' },
+    { key: 'procurement', label: 'Procurement', path: '/inventory/procurement' },
+    { key: 'adjustments', label: 'Adjustments', path: '/inventory/adjustments' },
+    { key: 'equipment', label: 'Equipment', path: '/inventory/equipment' },
+    { key: 'reports', label: 'Reports', path: '/inventory/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
@@ -110,4 +121,5 @@ export const ROLE_BASE_PATH: Record<UserRole, string> = {
   billing: '/billing-dept',
   radiologist: '/radiology',
   ot_coordinator: '/ot',
+  inventory_manager: '/inventory',
 };

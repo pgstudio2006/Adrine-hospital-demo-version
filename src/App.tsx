@@ -106,6 +106,17 @@ import OTInventory from "@/pages/ot/OTInventory";
 import OTReports from "@/pages/ot/OTReports";
 import OTAnalytics from "@/pages/ot/OTAnalytics";
 
+// Inventory pages
+import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
+import InventoryCatalog from "@/pages/inventory/InventoryCatalog";
+import InventoryStockEntry from "@/pages/inventory/InventoryStockEntry";
+import InventoryDistribution from "@/pages/inventory/InventoryDistribution";
+import InventoryRequisitions from "@/pages/inventory/InventoryRequisitions";
+import InventoryPurchaseOrders from "@/pages/inventory/InventoryPurchaseOrders";
+import InventoryAdjustments from "@/pages/inventory/InventoryAdjustments";
+import InventoryEquipment from "@/pages/inventory/InventoryEquipment";
+import InventoryReports from "@/pages/inventory/InventoryReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -208,6 +219,18 @@ const OT_PAGES: Record<string, React.ComponentType> = {
   '/ot/analytics': OTAnalytics,
 };
 
+const INVENTORY_PAGES: Record<string, React.ComponentType> = {
+  '/inventory': InventoryDashboard,
+  '/inventory/catalog': InventoryCatalog,
+  '/inventory/stock-entry': InventoryStockEntry,
+  '/inventory/distribution': InventoryDistribution,
+  '/inventory/requisitions': InventoryRequisitions,
+  '/inventory/procurement': InventoryPurchaseOrders,
+  '/inventory/adjustments': InventoryAdjustments,
+  '/inventory/equipment': InventoryEquipment,
+  '/inventory/reports': InventoryReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -294,8 +317,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Inventory routes — fully built */}
+      {Object.entries(INVENTORY_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -304,7 +334,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
