@@ -22,6 +22,7 @@ const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
   emergency: <Siren className="w-6 h-6" />,
   hr_manager: <Users className="w-6 h-6" />,
   scheduler: <CalendarClock className="w-6 h-6" />,
+  dialysis_tech: <Heart className="w-6 h-6" />,
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
