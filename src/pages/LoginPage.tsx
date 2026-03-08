@@ -22,6 +22,7 @@ const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
   emergency: <Siren className="w-6 h-6" />,
   hr_manager: <Users className="w-6 h-6" />,
   scheduler: <CalendarClock className="w-6 h-6" />,
+  dialysis_tech: <Heart className="w-6 h-6" />,
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
@@ -38,6 +39,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   emergency: 'ER triage, cases & trauma care',
   hr_manager: 'Staff, attendance & workforce',
   scheduler: 'Appointments & resource scheduling',
+  dialysis_tech: 'Haemodialysis unit & sessions',
 };
 
 export default function LoginPage() {
