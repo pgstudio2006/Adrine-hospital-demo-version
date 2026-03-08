@@ -53,6 +53,27 @@ export default function DoctorConsultation() {
   const [viewMode, setViewMode] = useState<'Digital' | 'Tablet'>('Digital');
   const [leftTab, setLeftTab] = useState<'clinical' | 'orders'>('clinical');
   const [showPreview, setShowPreview] = useState(false);
+  const [showAIScribe, setShowAIScribe] = useState(false);
+
+  const handleAIScribeApply = (result: any) => {
+    if (result.complaints.length > 0) setComplaints(result.complaints);
+    if (result.diagnoses.length > 0) setDiagnoses(result.diagnoses);
+    if (result.medications.length > 0) setMedications(result.medications);
+    if (result.labTests.length > 0) setLabTests(result.labTests);
+    if (result.radiologyOrders.length > 0) setRadiologyOrders(result.radiologyOrders);
+    if (result.advice) setAdvice(result.advice);
+    if (result.followUpDays) setFollowUpDays(result.followUpDays);
+    // Apply vitals if present
+    if (result.vitals) {
+      setVitals(prev => {
+        const updated = { ...prev };
+        Object.entries(result.vitals).forEach(([k, v]) => {
+          if (v && typeof v === 'string' && v.trim()) (updated as any)[k] = v;
+        });
+        return updated;
+      });
+    }
+  };
 
   const handleSaveConsultation = () => {
     saveConsultation({
