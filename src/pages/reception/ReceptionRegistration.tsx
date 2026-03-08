@@ -1029,7 +1029,28 @@ export default function ReceptionRegistration() {
             <button onClick={handleNext}
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Continue</button>
           ) : (
-            <button onClick={() => { setMode('list'); setStep(0); }}
+            <button onClick={() => {
+              const uhid = registerPatient({
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                age: calculatedAge ?? 0,
+                gender: formData.gender === 'male' ? 'M' : formData.gender === 'female' ? 'F' : 'O',
+                phone: formData.phone,
+                bloodGroup: formData.bloodGroup || undefined,
+                abhaId: formData.abhaId || undefined,
+                aadhaar: formData.aadhaar || undefined,
+                category: formData.category,
+                patientType: formData.patientType,
+                department: formData.department || undefined,
+                assignedDoctor: formData.assignedDoctor || undefined,
+                allergies: formData.allergies || undefined,
+                chronicDiseases: formData.chronicDiseases || undefined,
+                branch: formData.branch,
+                insuranceProvider: formData.insuranceProvider || undefined,
+                policyNo: formData.policyNo || undefined,
+                isMLC: formData.isMLC,
+              });
+              setMode('list'); setStep(0);
+            }}
               className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Check className="w-4 h-4" /> Register Patient
             </button>
