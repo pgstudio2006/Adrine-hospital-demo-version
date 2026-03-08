@@ -55,6 +55,7 @@ export default function DoctorQueue() {
   const [queue, setQueue] = useState(queueData);
   const [selectedToken, setSelectedToken] = useState<string>('T-043');
   const [soapNotes, setSoapNotes] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
+  const navigate = useNavigate();
 
   const selected = queue.find(q => q.token === selectedToken);
   const waiting = queue.filter(q => q.status === 'waiting').length;
