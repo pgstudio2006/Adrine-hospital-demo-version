@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   FileText, Lock, Eye, EyeOff, Calendar, Sparkles,
-  BedDouble, UserPlus, Award, BookOpen, ArrowRightLeft
+  BedDouble, UserPlus, Award, BookOpen, ArrowRightLeft, FileSearch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
