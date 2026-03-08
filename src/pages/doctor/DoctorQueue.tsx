@@ -166,7 +166,7 @@ export default function DoctorQueue() {
                   </div>
                   <div className="flex gap-1.5">
                     {selected.status === 'waiting' && (
-                      <Button size="sm" onClick={handleNext} className="gap-1 text-xs h-7">
+                      <Button size="sm" onClick={() => navigate(`/doctor/consultation/${selected.token}`)} className="gap-1 text-xs h-7">
                         <Play className="w-3 h-3" /> Start Consult
                       </Button>
                     )}

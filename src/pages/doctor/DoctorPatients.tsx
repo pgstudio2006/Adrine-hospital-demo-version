@@ -111,7 +111,7 @@ export default function DoctorPatients() {
             {filtered.map((p) => (
               <div
                 key={p.id}
-                onClick={() => setSelectedPatient(p)}
+                onClick={() => { setSelectedPatient(p); navigate(`/doctor/patients/${p.id}`); }}
                 className={`flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 transition-colors cursor-pointer ${
                   selectedPatient?.id === p.id ? 'bg-accent/70' : ''
                 }`}

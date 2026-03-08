@@ -160,7 +160,7 @@ export default function DoctorIPD() {
             return (
               <div
                 key={p.id}
-                onClick={() => setSelectedPatient(p)}
+                onClick={() => { setSelectedPatient(p); navigate(`/doctor/ipd/${p.id}`); }}
                 className={`border rounded-xl p-4 bg-card hover:shadow-md transition-all cursor-pointer ${
                   selectedPatient?.id === p.id ? 'ring-2 ring-foreground/20' : ''
                 }`}
