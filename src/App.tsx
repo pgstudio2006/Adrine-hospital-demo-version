@@ -69,6 +69,19 @@ import RadiologyWorklist from "@/pages/radiology/RadiologyWorklist";
 import RadiologyReports from "@/pages/radiology/RadiologyReports";
 import RadiologySettings from "@/pages/radiology/RadiologySettings";
 
+// Admin pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminStaff from "@/pages/admin/AdminStaff";
+import AdminDepartments from "@/pages/admin/AdminDepartments";
+import AdminFinance from "@/pages/admin/AdminFinance";
+import AdminExpenses from "@/pages/admin/AdminExpenses";
+import AdminApprovals from "@/pages/admin/AdminApprovals";
+import AdminClaims from "@/pages/admin/AdminClaims";
+import AdminMRD from "@/pages/admin/AdminMRD";
+import AdminMIS from "@/pages/admin/AdminMIS";
+import AdminAudit from "@/pages/admin/AdminAudit";
+import AdminSettings from "@/pages/admin/AdminSettings";
+
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
 import BillingInvoices from "@/pages/billing/BillingInvoices";
@@ -81,6 +94,20 @@ import BillingFinance from "@/pages/billing/BillingFinance";
 import BillingReports from "@/pages/billing/BillingReports";
 
 const queryClient = new QueryClient();
+
+const ADMIN_PAGES: Record<string, React.ComponentType> = {
+  '/admin': AdminDashboard,
+  '/admin/staff': AdminStaff,
+  '/admin/departments': AdminDepartments,
+  '/admin/finance': AdminFinance,
+  '/admin/expenses': AdminExpenses,
+  '/admin/approvals': AdminApprovals,
+  '/admin/claims': AdminClaims,
+  '/admin/mrd': AdminMRD,
+  '/admin/mis': AdminMIS,
+  '/admin/audit': AdminAudit,
+  '/admin/settings': AdminSettings,
+};
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor': DoctorDashboard,
@@ -174,6 +201,13 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to={basePath} replace />} />
 
+      {/* Admin routes — fully built */}
+      {Object.entries(ADMIN_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Doctor routes — fully built */}
       {Object.entries(DOCTOR_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
@@ -227,7 +261,7 @@ function AppRoutes() {
       ))}
 
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -236,7 +270,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
