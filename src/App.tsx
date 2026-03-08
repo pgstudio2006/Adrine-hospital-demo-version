@@ -69,6 +69,19 @@ import RadiologyWorklist from "@/pages/radiology/RadiologyWorklist";
 import RadiologyReports from "@/pages/radiology/RadiologyReports";
 import RadiologySettings from "@/pages/radiology/RadiologySettings";
 
+// Admin pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminStaff from "@/pages/admin/AdminStaff";
+import AdminDepartments from "@/pages/admin/AdminDepartments";
+import AdminFinance from "@/pages/admin/AdminFinance";
+import AdminExpenses from "@/pages/admin/AdminExpenses";
+import AdminApprovals from "@/pages/admin/AdminApprovals";
+import AdminClaims from "@/pages/admin/AdminClaims";
+import AdminMRD from "@/pages/admin/AdminMRD";
+import AdminMIS from "@/pages/admin/AdminMIS";
+import AdminAudit from "@/pages/admin/AdminAudit";
+import AdminSettings from "@/pages/admin/AdminSettings";
+
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
 import BillingInvoices from "@/pages/billing/BillingInvoices";
