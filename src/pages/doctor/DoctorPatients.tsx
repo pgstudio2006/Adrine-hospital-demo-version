@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, ChevronRight, Phone, MapPin, Calendar, FileText, MoreVertical } from 'lucide-react';
+import { Search, Plus, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
