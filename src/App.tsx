@@ -42,6 +42,7 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/queue': DoctorQueue,
   '/doctor/schedule': DoctorSchedule,
   '/doctor/labs': DoctorLabs,
+  '/doctor/radiology': DoctorRadiology,
   '/doctor/ipd': DoctorIPD,
   '/doctor/analytics': DoctorAnalytics,
 };

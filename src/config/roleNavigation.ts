@@ -26,6 +26,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'queue', label: 'OPD Queue', path: '/doctor/queue' },
     { key: 'schedule', label: 'Schedule', path: '/doctor/schedule' },
     { key: 'labs', label: 'Labs', path: '/doctor/labs' },
+    { key: 'radiology', label: 'Radiology', path: '/doctor/radiology' },
     { key: 'ipd', label: 'IPD', path: '/doctor/ipd' },
     { key: 'analytics', label: 'Analytics', path: '/doctor/analytics' },
   ],
