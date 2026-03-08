@@ -163,11 +163,11 @@ export default function ReceptionRegistration() {
   // Duplicate detection
   const duplicateWarning = useMemo(() => {
     if (!formData.phone && !formData.aadhaar) return null;
-    return existingPatients.find(p =>
+    return storePatients.find(p =>
       (formData.phone && p.phone === formData.phone) ||
       (formData.aadhaar && formData.aadhaar.length >= 4 && p.aadhaar?.includes(formData.aadhaar.slice(-4)))
     ) || null;
-  }, [formData.phone, formData.aadhaar]);
+  }, [formData.phone, formData.aadhaar, storePatients]);
 
   // Duplicate phone detection
   const duplicatePhoneWarning = useMemo(() => {
