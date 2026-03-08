@@ -117,6 +117,17 @@ import InventoryAdjustments from "@/pages/inventory/InventoryAdjustments";
 import InventoryEquipment from "@/pages/inventory/InventoryEquipment";
 import InventoryReports from "@/pages/inventory/InventoryReports";
 
+// Emergency pages
+import EmergencyDashboard from "@/pages/emergency/EmergencyDashboard";
+import EmergencyTriage from "@/pages/emergency/EmergencyTriage";
+import EmergencyCases from "@/pages/emergency/EmergencyCases";
+import EmergencyTreatment from "@/pages/emergency/EmergencyTreatment";
+import EmergencyOrders from "@/pages/emergency/EmergencyOrders";
+import EmergencyObservation from "@/pages/emergency/EmergencyObservation";
+import EmergencyMLC from "@/pages/emergency/EmergencyMLC";
+import EmergencyAmbulance from "@/pages/emergency/EmergencyAmbulance";
+import EmergencyReports from "@/pages/emergency/EmergencyReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -231,6 +242,18 @@ const INVENTORY_PAGES: Record<string, React.ComponentType> = {
   '/inventory/reports': InventoryReports,
 };
 
+const EMERGENCY_PAGES: Record<string, React.ComponentType> = {
+  '/emergency': EmergencyDashboard,
+  '/emergency/triage': EmergencyTriage,
+  '/emergency/cases': EmergencyCases,
+  '/emergency/treatment': EmergencyTreatment,
+  '/emergency/orders': EmergencyOrders,
+  '/emergency/observation': EmergencyObservation,
+  '/emergency/mlc': EmergencyMLC,
+  '/emergency/ambulance': EmergencyAmbulance,
+  '/emergency/reports': EmergencyReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -324,8 +347,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Emergency routes — fully built */}
+      {Object.entries(EMERGENCY_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -334,7 +364,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>

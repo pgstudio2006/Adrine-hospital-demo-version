@@ -4,7 +4,7 @@ import { UserRole, ROLE_LABELS } from '@/types/roles';
 import { motion } from 'framer-motion';
 import { 
   Shield, Stethoscope, Heart, UserCheck, 
-  FlaskConical, Pill, CreditCard, ScanLine, Scissors, Package
+  FlaskConical, Pill, CreditCard, ScanLine, Scissors, Package, Siren
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,7 @@ const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
   radiologist: <ScanLine className="w-6 h-6" />,
   ot_coordinator: <Scissors className="w-6 h-6" />,
   inventory_manager: <Package className="w-6 h-6" />,
+  emergency: <Siren className="w-6 h-6" />,
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
@@ -32,6 +33,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   radiologist: 'Radiology worklist & reporting',
   ot_coordinator: 'OT scheduling & surgical teams',
   inventory_manager: 'Central store & supply chain',
+  emergency: 'ER triage, cases & trauma care',
 };
 
 export default function LoginPage() {
