@@ -60,6 +60,9 @@ function AppRoutes() {
           <AppLayout><Component /></AppLayout>
         } />
       ))}
+      <Route path="/doctor/patients/:patientId" element={<AppLayout><DoctorPatientProfile /></AppLayout>} />
+      <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
+      <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
       {/* Dashboard route for non-doctor roles */}
       {user.role !== 'doctor' && (
