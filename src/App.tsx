@@ -85,8 +85,15 @@ function AppRoutes() {
       <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
       <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
-      {/* Dashboard route for non-doctor roles */}
-      {user.role !== 'doctor' && (
+      {/* Reception routes — fully built */}
+      {Object.entries(RECEPTION_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
+      {/* Dashboard route for other roles */}
+      {user.role !== 'doctor' && user.role !== 'receptionist' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
