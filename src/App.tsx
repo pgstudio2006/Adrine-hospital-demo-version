@@ -81,6 +81,7 @@ import AdminMRD from "@/pages/admin/AdminMRD";
 import AdminMIS from "@/pages/admin/AdminMIS";
 import AdminAudit from "@/pages/admin/AdminAudit";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminGeoIntelligence from "@/pages/admin/AdminGeoIntelligence";
 
 // Billing pages
 import BillingDashboard from "@/pages/billing/BillingDashboard";
