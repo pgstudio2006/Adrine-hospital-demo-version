@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Filter, Plus, ChevronRight, Phone, MapPin, Calendar, FileText, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
