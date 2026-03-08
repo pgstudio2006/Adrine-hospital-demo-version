@@ -140,6 +140,15 @@ const RADIOLOGY_PAGES: Record<string, React.ComponentType> = {
   '/radiology/settings': RadiologySettings,
 };
 
+const BILLING_PAGES: Record<string, React.ComponentType> = {
+  '/billing-dept': BillingDashboard,
+  '/billing-dept/invoices': BillingInvoices,
+  '/billing-dept/payments': BillingPayments,
+  '/billing-dept/revenue': BillingRevenue,
+  '/billing-dept/insurance': BillingInsurance,
+  '/billing-dept/reports': BillingReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
