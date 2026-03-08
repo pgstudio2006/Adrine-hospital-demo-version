@@ -134,7 +134,7 @@ export default function DoctorConsultation() {
           <Button size="sm" variant="outline" className="gap-1.5">
             <Mic className="w-3.5 h-3.5" /> Voice Dictation
           </Button>
-          <Button size="sm" className="gap-1.5 bg-foreground text-background hover:bg-foreground/90">
+          <Button size="sm" className="gap-1.5 bg-foreground text-background hover:bg-foreground/90" onClick={() => setShowAIScribe(true)}>
             <Sparkles className="w-3.5 h-3.5" /> AI Scribe
           </Button>
         </div>
