@@ -108,6 +108,13 @@ function AppRoutes() {
       <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
       <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
+      {/* Nurse routes — fully built */}
+      {Object.entries(NURSE_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Reception routes — fully built */}
       {Object.entries(RECEPTION_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
@@ -116,7 +123,7 @@ function AppRoutes() {
       ))}
 
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -125,7 +132,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
