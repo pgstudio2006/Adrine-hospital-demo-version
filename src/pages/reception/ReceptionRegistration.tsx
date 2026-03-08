@@ -1143,7 +1143,7 @@ export default function ReceptionRegistration() {
                     <div>
                       <p className="text-sm font-medium flex items-center gap-1">
                         {p.name}
-                        {p.activeAdmission && <span className="text-xs px-1 py-0.5 rounded bg-info/10 text-info">IPD</span>}
+                        {p.patientType === 'IPD' && <span className="text-xs px-1 py-0.5 rounded bg-info/10 text-info">IPD</span>}
                       </p>
                       <p className="text-xs text-muted-foreground">{p.uhid} · {p.age}{p.gender} {p.bloodGroup ? `· ${p.bloodGroup}` : ''}</p>
                     </div>
@@ -1156,15 +1156,13 @@ export default function ReceptionRegistration() {
                 <td className="px-4 py-3 hidden lg:table-cell">
                   <div>
                     <p className="text-sm text-muted-foreground">{p.lastVisit || 'No visits'}</p>
-                    {p.lastDoctor && <p className="text-xs text-muted-foreground">{p.lastDoctor}</p>}
+                    {p.assignedDoctor && <p className="text-xs text-muted-foreground">{p.assignedDoctor}</p>}
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden lg:table-cell">
                   <div className="flex gap-1">
-                    {p.pendingBills && p.pendingBills > 0 && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-warning/10 text-warning">₹{p.pendingBills} due</span>
-                    )}
                     {p.abhaId && <span className="text-xs px-1.5 py-0.5 rounded-full bg-info/10 text-info">ABHA</span>}
+                    {p.patientType === 'Emergency' && <span className="text-xs px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">ER</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3">
