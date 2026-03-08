@@ -169,6 +169,8 @@ const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin/mis': AdminMIS,
   '/admin/audit': AdminAudit,
   '/admin/settings': AdminSettings,
+  '/admin/doctor-sharing': AdminDoctorSharing,
+  '/admin/phonebook': AdminPhonebook,
 };
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
