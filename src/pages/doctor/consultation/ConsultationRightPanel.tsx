@@ -20,6 +20,7 @@ interface Props {
   onTreatmentPlanChange: (v: string) => void;
   onSave: () => void;
   onDraft: () => void;
+  onPreview?: () => void;
 }
 
 export default function ConsultationRightPanel({
