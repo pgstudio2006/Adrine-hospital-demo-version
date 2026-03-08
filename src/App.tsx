@@ -87,7 +87,16 @@ const RECEPTION_PAGES: Record<string, React.ComponentType> = {
   '/reception/ipd': ReceptionIPD,
 };
 
-function AppRoutes() {
+const LAB_PAGES: Record<string, React.ComponentType> = {
+  '/lab': LabDashboard,
+  '/lab/worklist': LabWorklist,
+  '/lab/samples': LabSamples,
+  '/lab/entry': LabEntry,
+  '/lab/verification': LabVerification,
+  '/lab/reports': LabReports,
+};
+
+
   const { user } = useAuth();
 
   if (!user) {
