@@ -156,6 +156,11 @@ export default function ConsultationRightPanel({
 
       {/* Save Actions */}
       <div className="space-y-2 pt-2">
+        {onPreview && (
+          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={onPreview}>
+            <FileSearch className="w-3.5 h-3.5" /> Preview Prescription
+          </Button>
+        )}
         <Button size="sm" className="w-full bg-foreground text-background hover:bg-foreground/90" onClick={onSave}>
           Save & Print Prescription
         </Button>
