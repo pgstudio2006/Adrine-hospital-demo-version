@@ -20,7 +20,6 @@ const patients = [
   { id: "DL-008", uhid: "UH-11890", name: "Kamal Verma", age: 55, gender: "M", blood: "O+", startDate: "2023-04-01", frequency: "3x/week", type: "CRRT", access: "Catheter", nephrologist: "Dr. Sanjay Mehta", machine: "HD-06", totalSessions: 0, status: "Paused" },
 ];
 
-const [selectedPatient, setSelectedPatient] = [null as typeof patients[0] | null, (_p: typeof patients[0] | null) => {}];
 
 export default function DialysisPatients() {
   const [search, setSearch] = useState("");
