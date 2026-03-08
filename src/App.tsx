@@ -24,6 +24,16 @@ import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
 import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 import DoctorRadiology from "@/pages/doctor/DoctorRadiology";
 
+// Nurse pages
+import NurseDashboard from "@/pages/nurse/NurseDashboard";
+import NurseWard from "@/pages/nurse/NurseWard";
+import NurseAdmissions from "@/pages/nurse/NurseAdmissions";
+import NurseTasks from "@/pages/nurse/NurseTasks";
+import NurseMedications from "@/pages/nurse/NurseMedications";
+import NurseVitals from "@/pages/nurse/NurseVitals";
+import NurseDischarge from "@/pages/nurse/NurseDischarge";
+import NurseReports from "@/pages/nurse/NurseReports";
+
 // Reception pages
 import ReceptionDashboard from "@/pages/reception/ReceptionDashboard";
 import ReceptionRegistration from "@/pages/reception/ReceptionRegistration";
