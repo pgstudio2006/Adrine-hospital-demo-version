@@ -22,6 +22,7 @@ import DoctorAnalytics from "@/pages/doctor/DoctorAnalytics";
 import DoctorPatientProfile from "@/pages/doctor/DoctorPatientProfile";
 import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
 import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
+import DoctorRadiology from "@/pages/doctor/DoctorRadiology";
 
 // Reception pages
 import ReceptionDashboard from "@/pages/reception/ReceptionDashboard";
@@ -41,6 +42,7 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor/queue': DoctorQueue,
   '/doctor/schedule': DoctorSchedule,
   '/doctor/labs': DoctorLabs,
+  '/doctor/radiology': DoctorRadiology,
   '/doctor/ipd': DoctorIPD,
   '/doctor/analytics': DoctorAnalytics,
 };
