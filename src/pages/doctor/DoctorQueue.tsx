@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Play, Pause, SkipForward, CheckCircle2, Clock,
@@ -54,6 +55,7 @@ export default function DoctorQueue() {
   const [queue, setQueue] = useState(queueData);
   const [selectedToken, setSelectedToken] = useState<string>('T-043');
   const [soapNotes, setSoapNotes] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
+  const navigate = useNavigate();
 
   const selected = queue.find(q => q.token === selectedToken);
   const waiting = queue.filter(q => q.status === 'waiting').length;
@@ -164,7 +166,7 @@ export default function DoctorQueue() {
                   </div>
                   <div className="flex gap-1.5">
                     {selected.status === 'waiting' && (
-                      <Button size="sm" onClick={handleNext} className="gap-1 text-xs h-7">
+                      <Button size="sm" onClick={() => navigate(`/doctor/consultation/${selected.token}`)} className="gap-1 text-xs h-7">
                         <Play className="w-3 h-3" /> Start Consult
                       </Button>
                     )}

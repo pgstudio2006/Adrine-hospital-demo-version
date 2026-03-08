@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Filter, Plus, ChevronRight, Phone, MapPin, Calendar, FileText, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,7 @@ export default function DoctorPatients() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const navigate = useNavigate();
 
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -109,7 +111,7 @@ export default function DoctorPatients() {
             {filtered.map((p) => (
               <div
                 key={p.id}
-                onClick={() => setSelectedPatient(p)}
+                onClick={() => { setSelectedPatient(p); navigate(`/doctor/patients/${p.id}`); }}
                 className={`flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 transition-colors cursor-pointer ${
                   selectedPatient?.id === p.id ? 'bg-accent/70' : ''
                 }`}

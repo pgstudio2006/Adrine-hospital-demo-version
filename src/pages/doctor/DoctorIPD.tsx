@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BedDouble, Search, AlertTriangle, CheckCircle2, Clock,
@@ -86,6 +87,7 @@ export default function DoctorIPD() {
   const [search, setSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<IPDPatient | null>(ipdPatients[1]);
   const [condFilter, setCondFilter] = useState('All');
+  const navigate = useNavigate();
 
   const filtered = ipdPatients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.bed.toLowerCase().includes(search.toLowerCase());
@@ -158,7 +160,7 @@ export default function DoctorIPD() {
             return (
               <div
                 key={p.id}
-                onClick={() => setSelectedPatient(p)}
+                onClick={() => { setSelectedPatient(p); navigate(`/doctor/ipd/${p.id}`); }}
                 className={`border rounded-xl p-4 bg-card hover:shadow-md transition-all cursor-pointer ${
                   selectedPatient?.id === p.id ? 'ring-2 ring-foreground/20' : ''
                 }`}

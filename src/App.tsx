@@ -19,6 +19,9 @@ import DoctorSchedule from "@/pages/doctor/DoctorSchedule";
 import DoctorLabs from "@/pages/doctor/DoctorLabs";
 import DoctorIPD from "@/pages/doctor/DoctorIPD";
 import DoctorAnalytics from "@/pages/doctor/DoctorAnalytics";
+import DoctorPatientProfile from "@/pages/doctor/DoctorPatientProfile";
+import DoctorIPDPatientProfile from "@/pages/doctor/DoctorIPDPatientProfile";
+import DoctorConsultation from "@/pages/doctor/DoctorConsultation";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +60,9 @@ function AppRoutes() {
           <AppLayout><Component /></AppLayout>
         } />
       ))}
+      <Route path="/doctor/patients/:patientId" element={<AppLayout><DoctorPatientProfile /></AppLayout>} />
+      <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
+      <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
 
       {/* Dashboard route for non-doctor roles */}
       {user.role !== 'doctor' && (
