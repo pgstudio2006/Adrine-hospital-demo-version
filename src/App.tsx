@@ -44,6 +44,14 @@ import ReceptionBilling from "@/pages/reception/ReceptionBilling";
 import ReceptionBeds from "@/pages/reception/ReceptionBeds";
 import ReceptionIPD from "@/pages/reception/ReceptionIPD";
 
+// Lab pages
+import LabDashboard from "@/pages/lab/LabDashboard";
+import LabWorklist from "@/pages/lab/LabWorklist";
+import LabSamples from "@/pages/lab/LabSamples";
+import LabEntry from "@/pages/lab/LabEntry";
+import LabVerification from "@/pages/lab/LabVerification";
+import LabReports from "@/pages/lab/LabReports";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
