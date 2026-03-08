@@ -22,41 +22,59 @@ const fadeIn = (i: number) => ({
 export default function DoctorConsultation() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const { patients, saveConsultation } = useHospital();
+  const { user } = useAuth();
+
+  // Look up patient from store
+  const patient = patients.find(p => p.uhid === patientId);
+  const patientName = patient?.name ?? 'Patient';
+  const patientInfo = patient 
+    ? `${patient.age}y / ${patient.gender}  •  UHID: ${patient.uhid}  •  ${patient.phone}`
+    : `UHID: ${patientId}`;
+  const patientAllergies = patient?.allergies ? patient.allergies.split(',').map(a => a.trim()) : [];
 
   // Vitals
   const [vitals, setVitals] = useState({ bp: '120/80', spo2: '98', temp: '98.6', pulse: '72', weight: '70', sugar: '110', height: '170', rr: '18', bmi: '24.2' });
-
-  // Complaints & HPI
   const [complaints, setComplaints] = useState<Complaint[]>([{ id: '1', text: 'Fever and headache', duration: '2 days', severity: 'moderate' }]);
   const [hpiNotes, setHpiNotes] = useState('');
-
-  // Physical Examination
   const [examFindings, setExamFindings] = useState<ExamFindings>({ general: '', cardiovascular: '', respiratory: '', neurological: '', abdominal: '', musculoskeletal: '', ent: '', dermatological: '' });
-
-  // Diagnosis
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
-
-  // Orders
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [radiologyOrders, setRadiologyOrders] = useState<RadiologyOrder[]>([]);
   const [procedures, setProcedures] = useState<ProcedureOrder[]>([]);
-
-  // Medications
   const [medications, setMedications] = useState<Medication[]>([]);
-
-  // Right panel
   const [treatmentPlan, setTreatmentPlan] = useState('');
   const [advice, setAdvice] = useState('');
   const [privateNotes, setPrivateNotes] = useState('');
   const [followUpDays, setFollowUpDays] = useState('15');
   const [followUpUnit, setFollowUpUnit] = useState('Days');
-
   const [viewMode, setViewMode] = useState<'Digital' | 'Tablet'>('Digital');
   const [leftTab, setLeftTab] = useState<'clinical' | 'orders'>('clinical');
 
-  const patientName = patientId === '1' ? 'Rajesh Patel' : 'Patient';
-  const patientInfo = '45y / Male  •  UHID: ADR-2024-0001  •  +91 98765 43210';
-  const patientAllergies = ['Penicillin'];
+  const handleSaveConsultation = () => {
+    saveConsultation({
+      uhid: patientId || '',
+      patientName,
+      doctor: user?.name || 'Dr. Doctor',
+      department: patient?.department || 'General Medicine',
+      labTests: labTests.map(t => ({ tests: t.testName || t.name || '', category: t.category || 'General', priority: (t.priority as any) || 'Routine' })),
+      medications: medications.map(m => ({
+        drug: m.name || m.drug || '',
+        dosage: m.dosage || m.dose || '',
+        frequency: m.frequency || 'OD',
+        duration: m.duration || '7 days',
+        route: m.route || 'Oral',
+        qty: parseInt(m.quantity || m.qty || '10') || 10,
+      })),
+      radiologyOrders: radiologyOrders.map(r => ({
+        study: r.studyName || r.name || '',
+        modality: r.modality || 'X-Ray',
+        priority: (r.priority as any) || 'Routine',
+      })),
+      consultationFee: 800,
+    });
+    navigate(-1);
+  };
 
   return (
     <div className="space-y-4">
