@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useHospital } from '@/stores/hospitalStore';
 import {
   Search, UserPlus, Phone, CreditCard, Shield, ChevronRight, X, Check, User, FileText,
   AlertTriangle, Upload, Heart, MapPin, Camera, Scale, Merge, GitMerge,
@@ -74,6 +75,7 @@ const validateAadhaar = (aadhaar: string) => /^\d{4}\s?\d{4}\s?\d{4}$/.test(aadh
 const validateABHA = (abha: string) => /^\d{2}-\d{4}-\d{4}-\d{4}$/.test(abha);
 
 export default function ReceptionRegistration() {
+  const { patients: storePatients, registerPatient } = useHospital();
   const [mode, setMode] = useState<'list' | 'new' | 'emergency' | 'merge' | 'abha-lookup'>('list');
   const [search, setSearch] = useState('');
   const [step, setStep] = useState(0);
@@ -161,22 +163,22 @@ export default function ReceptionRegistration() {
   // Duplicate detection
   const duplicateWarning = useMemo(() => {
     if (!formData.phone && !formData.aadhaar) return null;
-    return existingPatients.find(p =>
+    return storePatients.find(p =>
       (formData.phone && p.phone === formData.phone) ||
       (formData.aadhaar && formData.aadhaar.length >= 4 && p.aadhaar?.includes(formData.aadhaar.slice(-4)))
     ) || null;
-  }, [formData.phone, formData.aadhaar]);
+  }, [formData.phone, formData.aadhaar, storePatients]);
 
   // Duplicate phone detection
   const duplicatePhoneWarning = useMemo(() => {
     if (!formData.phone || formData.phone.length < 10) return null;
-    return existingPatients.find(p => p.phone === formData.phone) || null;
-  }, [formData.phone]);
+    return storePatients.find(p => p.phone === formData.phone) || null;
+  }, [formData.phone, storePatients]);
 
-  const newUHID = `UHID-${(240000 + existingPatients.length + 1).toString()}`;
+  const newUHID = `UHID-${(240000 + storePatients.length + 1).toString()}`;
   const calculatedAge = formData.dob ? Math.floor((Date.now() - new Date(formData.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
 
-  const filtered = existingPatients.filter(p => {
+  const filtered = storePatients.filter(p => {
     if (!search) return true;
     const q = search.toLowerCase();
     const branchMatch = p.branch === selectedBranch || selectedBranch === 'All Branches';
@@ -1027,7 +1029,28 @@ export default function ReceptionRegistration() {
             <button onClick={handleNext}
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Continue</button>
           ) : (
-            <button onClick={() => { setMode('list'); setStep(0); }}
+            <button onClick={() => {
+              const uhid = registerPatient({
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                age: calculatedAge ?? 0,
+                gender: formData.gender === 'male' ? 'M' : formData.gender === 'female' ? 'F' : 'O',
+                phone: formData.phone,
+                bloodGroup: formData.bloodGroup || undefined,
+                abhaId: formData.abhaId || undefined,
+                aadhaar: formData.aadhaar || undefined,
+                category: formData.category,
+                patientType: formData.patientType,
+                department: formData.department || undefined,
+                assignedDoctor: formData.assignedDoctor || undefined,
+                allergies: formData.allergies || undefined,
+                chronicDiseases: formData.chronicDiseases || undefined,
+                branch: formData.branch,
+                insuranceProvider: formData.insuranceProvider || undefined,
+                policyNo: formData.policyNo || undefined,
+                isMLC: formData.isMLC,
+              });
+              setMode('list'); setStep(0);
+            }}
               className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Check className="w-4 h-4" /> Register Patient
             </button>
@@ -1120,7 +1143,7 @@ export default function ReceptionRegistration() {
                     <div>
                       <p className="text-sm font-medium flex items-center gap-1">
                         {p.name}
-                        {p.activeAdmission && <span className="text-xs px-1 py-0.5 rounded bg-info/10 text-info">IPD</span>}
+                        {p.patientType === 'IPD' && <span className="text-xs px-1 py-0.5 rounded bg-info/10 text-info">IPD</span>}
                       </p>
                       <p className="text-xs text-muted-foreground">{p.uhid} · {p.age}{p.gender} {p.bloodGroup ? `· ${p.bloodGroup}` : ''}</p>
                     </div>
@@ -1133,15 +1156,13 @@ export default function ReceptionRegistration() {
                 <td className="px-4 py-3 hidden lg:table-cell">
                   <div>
                     <p className="text-sm text-muted-foreground">{p.lastVisit || 'No visits'}</p>
-                    {p.lastDoctor && <p className="text-xs text-muted-foreground">{p.lastDoctor}</p>}
+                    {p.assignedDoctor && <p className="text-xs text-muted-foreground">{p.assignedDoctor}</p>}
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden lg:table-cell">
                   <div className="flex gap-1">
-                    {p.pendingBills && p.pendingBills > 0 && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-warning/10 text-warning">₹{p.pendingBills} due</span>
-                    )}
                     {p.abhaId && <span className="text-xs px-1.5 py-0.5 rounded-full bg-info/10 text-info">ABHA</span>}
+                    {p.patientType === 'Emergency' && <span className="text-xs px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">ER</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3">

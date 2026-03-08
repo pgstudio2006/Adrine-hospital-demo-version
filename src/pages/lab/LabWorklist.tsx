@@ -1,43 +1,13 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Clock, FlaskConical, ListChecks, Search } from "lucide-react";
-
-interface WorklistItem {
-  orderId: string;
-  uhid: string;
-  patient: string;
-  tests: string;
-  category: string;
-  priority: "Routine" | "Urgent" | "Emergency";
-  doctor: string;
-  orderTime: string;
-  sampleStatus: string;
-  stage: string;
-  tat: string;
-}
-
-const WORKLIST: WorklistItem[] = [
-  { orderId: "LO-4521", uhid: "UH-2024-0045", patient: "Anita Sharma", tests: "CBC, CRP, ESR", category: "Hematology", priority: "Urgent", doctor: "Dr. Priya Gupta", orderTime: "10:15 AM", sampleStatus: "Received", stage: "Pending Analysis", tat: "1h 45m left" },
-  { orderId: "LO-4520", uhid: "UH-2024-0012", patient: "Ramesh Kumar", tests: "ABG, Electrolytes, RFT", category: "Biochemistry", priority: "Emergency", doctor: "Dr. Anil Mehta", orderTime: "10:00 AM", sampleStatus: "Processing", stage: "In Analysis", tat: "30m left" },
-  { orderId: "LO-4519", uhid: "UH-2024-0078", patient: "Suresh Patel", tests: "PT/INR, aPTT", category: "Hematology", priority: "Routine", doctor: "Dr. Rajesh Shah", orderTime: "09:45 AM", sampleStatus: "Collected", stage: "Awaiting Reception", tat: "3h left" },
-  { orderId: "LO-4516", uhid: "UH-2024-0130", patient: "Arjun Reddy", tests: "Blood Culture, Sensitivity", category: "Microbiology", priority: "Urgent", doctor: "Dr. Anil Mehta", orderTime: "09:00 AM", sampleStatus: "Processing", stage: "Incubation", tat: "36h left" },
-  { orderId: "LO-4515", uhid: "UH-2024-0142", patient: "Fatima Begum", tests: "Thyroid Panel (T3, T4, TSH)", category: "Biochemistry", priority: "Routine", doctor: "Dr. Sunita Joshi", orderTime: "08:45 AM", sampleStatus: "Received", stage: "Pending Analysis", tat: "1h 15m left" },
-  { orderId: "LO-4514", uhid: "UH-2024-0155", patient: "Kiran Desai", tests: "Lipid Profile, HbA1c", category: "Biochemistry", priority: "Routine", doctor: "Dr. Priya Gupta", orderTime: "08:30 AM", sampleStatus: "Analysis Complete", stage: "Awaiting Validation", tat: "Done" },
-  { orderId: "LO-4513", uhid: "UH-2024-0091", patient: "Meena Devi", tests: "Urine Routine, Culture", category: "Microbiology", priority: "Routine", doctor: "Dr. Sunita Joshi", orderTime: "08:15 AM", sampleStatus: "Received", stage: "In Analysis", tat: "24h left" },
-  { orderId: "LO-4512", uhid: "UH-2024-0160", patient: "Ravi Shankar", tests: "HIV, HBsAg, HCV", category: "Serology", priority: "Urgent", doctor: "Dr. Rajesh Shah", orderTime: "08:00 AM", sampleStatus: "Analysis Complete", stage: "Awaiting Validation", tat: "Done" },
-];
-
-const DELAYED = [
-  { orderId: "LO-4508", uhid: "UH-2024-0170", patient: "Sundar Lal", tests: "Widal Test", category: "Serology", doctor: "Dr. Priya Gupta", orderTime: "Yesterday 4 PM", delay: "2h overdue", reason: "Reagent shortage" },
-  { orderId: "LO-4505", uhid: "UH-2024-0185", patient: "Prathima S", tests: "ANA, dsDNA", category: "Immunology", doctor: "Dr. Anil Mehta", orderTime: "Yesterday 2 PM", delay: "4h overdue", reason: "Equipment maintenance" },
-];
+import { useHospital } from "@/stores/hospitalStore";
 
 const priorityColor = (p: string) => {
   if (p === "Emergency") return "destructive";
@@ -52,28 +22,44 @@ const stageColor = (s: string) => {
 };
 
 export default function LabWorklist() {
+  const { labOrders, updateLabStage } = useHospital();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
 
-  const filtered = WORKLIST.filter(w => {
-    const matchSearch = w.patient.toLowerCase().includes(search.toLowerCase()) || w.uhid.includes(search) || w.orderId.includes(search);
+  const activeOrders = labOrders.filter(o => o.stage !== 'Validated' && o.stage !== 'Reported');
+  const delayedOrders = labOrders.filter(o => o.stage === 'Pending Analysis' && o.sampleStatus === 'Ordered');
+
+  const filtered = activeOrders.filter(w => {
+    const matchSearch = w.patientName.toLowerCase().includes(search.toLowerCase()) || w.uhid.includes(search) || w.orderId.includes(search);
     const matchCat = categoryFilter === "all" || w.category === categoryFilter;
     const matchPri = priorityFilter === "all" || w.priority === priorityFilter;
     return matchSearch && matchCat && matchPri;
   });
 
+  const handleAdvanceStage = (orderId: string, currentStage: string) => {
+    const stageFlow: Record<string, string> = {
+      'Pending Analysis': 'In Analysis',
+      'In Analysis': 'Awaiting Validation',
+      'Awaiting Validation': 'Validated',
+    };
+    const nextStage = stageFlow[currentStage];
+    if (nextStage) updateLabStage(orderId, nextStage as any);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Worklist</h1>
-        <p className="text-sm text-muted-foreground mt-1">Pending tests, processing queue & delayed tests</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {activeOrders.length} active orders · {labOrders.filter(o => o.stage === 'Validated').length} validated today
+        </p>
       </div>
 
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active"><ListChecks className="h-3.5 w-3.5 mr-1" /> Active ({WORKLIST.length})</TabsTrigger>
-          <TabsTrigger value="delayed"><Clock className="h-3.5 w-3.5 mr-1" /> Delayed ({DELAYED.length})</TabsTrigger>
+          <TabsTrigger value="active"><ListChecks className="h-3.5 w-3.5 mr-1" /> Active ({activeOrders.length})</TabsTrigger>
+          <TabsTrigger value="pending-samples"><Clock className="h-3.5 w-3.5 mr-1" /> Pending Samples ({delayedOrders.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4 space-y-4">
@@ -90,7 +76,6 @@ export default function LabWorklist() {
                 <SelectItem value="Biochemistry">Biochemistry</SelectItem>
                 <SelectItem value="Microbiology">Microbiology</SelectItem>
                 <SelectItem value="Serology">Serology</SelectItem>
-                <SelectItem value="Immunology">Immunology</SelectItem>
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -114,31 +99,39 @@ export default function LabWorklist() {
                     <TableHead>Tests</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Priority</TableHead>
+                    <TableHead>Sample</TableHead>
                     <TableHead>Stage</TableHead>
-                    <TableHead>TAT</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(w => (
+                  {filtered.length === 0 ? (
+                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No lab orders. Orders will appear here when doctors create them during consultation.</TableCell></TableRow>
+                  ) : filtered.map(w => (
                     <TableRow key={w.orderId}>
                       <TableCell>
                         <p className="text-sm font-mono text-foreground">{w.orderId}</p>
                         <p className="text-xs text-muted-foreground">{w.orderTime}</p>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm font-medium text-foreground">{w.patient}</p>
+                        <p className="text-sm font-medium text-foreground">{w.patientName}</p>
                         <p className="text-xs text-muted-foreground">{w.uhid}</p>
                       </TableCell>
                       <TableCell className="text-sm max-w-[180px] truncate">{w.tests}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs">{w.category}</Badge></TableCell>
                       <TableCell><Badge variant={priorityColor(w.priority)} className="text-xs">{w.priority}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-xs">{w.sampleStatus}</Badge></TableCell>
                       <TableCell><Badge variant={stageColor(w.stage)} className="text-xs">{w.stage}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{w.tat}</TableCell>
                       <TableCell>
-                        {w.stage === "Pending Analysis" && <Button size="sm" variant="outline" className="text-xs h-7">Start</Button>}
-                        {w.stage === "In Analysis" && <Button size="sm" variant="outline" className="text-xs h-7">Enter Results</Button>}
-                        {w.stage === "Awaiting Validation" && <Button size="sm" className="text-xs h-7">Validate</Button>}
+                        {w.stage === "Pending Analysis" && (
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleAdvanceStage(w.orderId, w.stage)}>Start Analysis</Button>
+                        )}
+                        {w.stage === "In Analysis" && (
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleAdvanceStage(w.orderId, w.stage)}>Enter Results</Button>
+                        )}
+                        {w.stage === "Awaiting Validation" && (
+                          <Button size="sm" className="text-xs h-7" onClick={() => handleAdvanceStage(w.orderId, w.stage)}>Validate</Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -148,20 +141,21 @@ export default function LabWorklist() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="delayed" className="mt-4 space-y-4">
-          {DELAYED.map(d => (
-            <Card key={d.orderId} className="border-border border-l-4 border-l-destructive">
+        <TabsContent value="pending-samples" className="mt-4 space-y-4">
+          {delayedOrders.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">No pending sample collections</div>
+          ) : delayedOrders.map(d => (
+            <Card key={d.orderId} className="border-border border-l-4 border-l-warning">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-mono text-foreground">{d.orderId}</span>
-                    <Badge variant="destructive" className="text-xs">{d.delay}</Badge>
+                    <Badge variant="default" className="text-xs">Sample Pending</Badge>
                   </div>
-                  <Button size="sm" variant="outline" className="text-xs h-7">Escalate</Button>
+                  <Button size="sm" variant="outline" className="text-xs h-7">Mark Collected</Button>
                 </div>
-                <p className="text-sm font-medium text-foreground">{d.patient} <span className="text-muted-foreground font-normal">· {d.uhid}</span></p>
+                <p className="text-sm font-medium text-foreground">{d.patientName} <span className="text-muted-foreground font-normal">· {d.uhid}</span></p>
                 <p className="text-xs text-muted-foreground">{d.tests} · {d.category} · {d.doctor}</p>
-                <p className="text-xs text-muted-foreground mt-1">Reason: {d.reason}</p>
               </CardContent>
             </Card>
           ))}
