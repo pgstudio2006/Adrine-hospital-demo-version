@@ -4,7 +4,7 @@ import { UserRole, ROLE_LABELS } from '@/types/roles';
 import { motion } from 'framer-motion';
 import { 
   Shield, Stethoscope, Heart, UserCheck, 
-  FlaskConical, Pill, CreditCard, ScanLine, Scissors
+  FlaskConical, Pill, CreditCard, ScanLine, Scissors, Package
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
