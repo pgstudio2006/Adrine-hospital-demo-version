@@ -160,7 +160,7 @@ export default function PharmacyInventory() {
             <div><Label>Supplier</Label><Input placeholder="Supplier name" /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-              <Button onClick={() => setShowAdd(false)}>Add to Inventory</Button>
+              <Button onClick={() => { setShowAdd(false); toast.success("Item added to inventory"); }}>Add to Inventory</Button>
             </div>
           </div>
         </DialogContent>

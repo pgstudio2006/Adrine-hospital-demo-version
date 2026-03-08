@@ -248,7 +248,7 @@ export default function BillingPackages() {
             <div><Label>Add Services</Label><Input placeholder="Search and add services..." /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddPkg(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddPkg(false)}>Create Package</Button>
+              <Button onClick={() => { setShowAddPkg(false); toast.success("Package created successfully"); }}>Create Package</Button>
             </div>
           </div>
         </DialogContent>

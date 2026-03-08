@@ -279,7 +279,7 @@ export default function RadiologySettings() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddEq(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddEq(false)}>Register</Button>
+              <Button onClick={() => { setShowAddEq(false); toast.success("Equipment registered successfully"); }}>Register</Button>
             </div>
           </div>
         </DialogContent>

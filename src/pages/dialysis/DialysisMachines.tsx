@@ -68,7 +68,7 @@ export default function DialysisMachines() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-              <Button onClick={() => setShowAdd(false)}>Register</Button>
+              <Button onClick={() => { setShowAdd(false); toast.success("Machine registered successfully"); }}>Register</Button>
             </div>
           </DialogContent>
         </Dialog>

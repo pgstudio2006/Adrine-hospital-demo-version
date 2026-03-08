@@ -204,7 +204,7 @@ export default function BillingInsurance() {
             <div><Label>Notes</Label><Textarea placeholder="Claim details..." rows={2} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNew(false)}>Cancel</Button>
-              <Button onClick={() => setShowNew(false)}>Submit Claim</Button>
+              <Button onClick={() => { setShowNew(false); toast.success("Insurance claim submitted"); }}>Submit Claim</Button>
             </div>
           </div>
         </DialogContent>

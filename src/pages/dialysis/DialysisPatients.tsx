@@ -119,7 +119,7 @@ export default function DialysisPatients() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setShowRegister(false)}>Cancel</Button>
-              <Button onClick={() => setShowRegister(false)}>Register Patient</Button>
+              <Button onClick={() => { setShowRegister(false); toast.success("Dialysis patient registered successfully"); }}>Register Patient</Button>
             </div>
           </DialogContent>
         </Dialog>

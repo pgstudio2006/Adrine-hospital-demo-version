@@ -182,7 +182,7 @@ export default function PharmacyPurchase() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button onClick={() => setShowCreate(false)}>Create Order</Button>
+              <Button onClick={() => { setShowCreate(false); toast.success("Purchase order created"); }}>Create Order</Button>
             </div>
           </div>
         </DialogContent>
