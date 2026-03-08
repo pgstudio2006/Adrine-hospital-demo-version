@@ -178,6 +178,14 @@ const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   '/admin': AdminDashboard,
+  '/admin/command-center': AdminCommandCenter,
+  '/admin/mortality': AdminMortalityAnalytics,
+  '/admin/ai-workflow': AdminAIWorkflow,
+  '/admin/disease-mapping': AdminDiseaseMapping,
+  '/admin/data-mining': AdminDataMining,
+  '/admin/kaizen': AdminKaizen,
+  '/admin/revenue-cycle': AdminRevenueCycle,
+  '/admin/treatment-success': AdminTreatmentSuccess,
   '/admin/staff': AdminStaff,
   '/admin/departments': AdminDepartments,
   '/admin/finance': AdminFinance,
