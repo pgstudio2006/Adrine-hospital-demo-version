@@ -26,7 +26,7 @@ interface Props {
 export default function ConsultationRightPanel({
   advice, onAdviceChange, privateNotes, onPrivateNotesChange,
   followUpDays, onFollowUpDaysChange, followUpUnit, onFollowUpUnitChange,
-  treatmentPlan, onTreatmentPlanChange, onSave, onDraft,
+  treatmentPlan, onTreatmentPlanChange, onSave, onDraft, onPreview,
 }: Props) {
   const [showPrivateNotes, setShowPrivateNotes] = useState(false);
   const [showAdmission, setShowAdmission] = useState(false);
