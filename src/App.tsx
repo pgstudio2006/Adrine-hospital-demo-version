@@ -106,6 +106,17 @@ import OTInventory from "@/pages/ot/OTInventory";
 import OTReports from "@/pages/ot/OTReports";
 import OTAnalytics from "@/pages/ot/OTAnalytics";
 
+// Inventory pages
+import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
+import InventoryCatalog from "@/pages/inventory/InventoryCatalog";
+import InventoryStockEntry from "@/pages/inventory/InventoryStockEntry";
+import InventoryDistribution from "@/pages/inventory/InventoryDistribution";
+import InventoryRequisitions from "@/pages/inventory/InventoryRequisitions";
+import InventoryPurchaseOrders from "@/pages/inventory/InventoryPurchaseOrders";
+import InventoryAdjustments from "@/pages/inventory/InventoryAdjustments";
+import InventoryEquipment from "@/pages/inventory/InventoryEquipment";
+import InventoryReports from "@/pages/inventory/InventoryReports";
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
