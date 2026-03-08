@@ -242,6 +242,18 @@ const INVENTORY_PAGES: Record<string, React.ComponentType> = {
   '/inventory/reports': InventoryReports,
 };
 
+const EMERGENCY_PAGES: Record<string, React.ComponentType> = {
+  '/emergency': EmergencyDashboard,
+  '/emergency/triage': EmergencyTriage,
+  '/emergency/cases': EmergencyCases,
+  '/emergency/treatment': EmergencyTreatment,
+  '/emergency/orders': EmergencyOrders,
+  '/emergency/observation': EmergencyObservation,
+  '/emergency/mlc': EmergencyMLC,
+  '/emergency/ambulance': EmergencyAmbulance,
+  '/emergency/reports': EmergencyReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
