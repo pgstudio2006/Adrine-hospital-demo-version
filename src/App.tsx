@@ -52,6 +52,16 @@ import LabEntry from "@/pages/lab/LabEntry";
 import LabVerification from "@/pages/lab/LabVerification";
 import LabReports from "@/pages/lab/LabReports";
 
+// Pharmacy pages
+import PharmacyDashboard from "@/pages/pharmacy/PharmacyDashboard";
+import PharmacyPrescriptions from "@/pages/pharmacy/PharmacyPrescriptions";
+import PharmacyInventory from "@/pages/pharmacy/PharmacyInventory";
+import PharmacyDrugs from "@/pages/pharmacy/PharmacyDrugs";
+import PharmacyBilling from "@/pages/pharmacy/PharmacyBilling";
+import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
+import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
+import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
+
 const queryClient = new QueryClient();
 
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
@@ -94,6 +104,17 @@ const LAB_PAGES: Record<string, React.ComponentType> = {
   '/lab/entry': LabEntry,
   '/lab/verification': LabVerification,
   '/lab/reports': LabReports,
+};
+
+const PHARMACY_PAGES: Record<string, React.ComponentType> = {
+  '/pharmacy': PharmacyDashboard,
+  '/pharmacy/prescriptions': PharmacyPrescriptions,
+  '/pharmacy/inventory': PharmacyInventory,
+  '/pharmacy/drugs': PharmacyDrugs,
+  '/pharmacy/billing': PharmacyBilling,
+  '/pharmacy/suppliers': PharmacySuppliers,
+  '/pharmacy/purchase': PharmacyPurchase,
+  '/pharmacy/queries': PharmacyQueries,
 };
 
 function AppRoutes() {
@@ -146,8 +167,15 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* Pharmacy routes — fully built */}
+      {Object.entries(PHARMACY_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -156,7 +184,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path])
+        .filter(t => !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
