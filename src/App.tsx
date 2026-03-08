@@ -195,6 +195,19 @@ const BILLING_PAGES: Record<string, React.ComponentType> = {
   '/billing-dept/reports': BillingReports,
 };
 
+const OT_PAGES: Record<string, React.ComponentType> = {
+  '/ot': OTDashboard,
+  '/ot/schedule': OTSchedule,
+  '/ot/rooms': OTRooms,
+  '/ot/teams': OTTeams,
+  '/ot/preop': OTPreOp,
+  '/ot/intraop': OTIntraOp,
+  '/ot/postop': OTPostOp,
+  '/ot/inventory': OTInventory,
+  '/ot/reports': OTReports,
+  '/ot/analytics': OTAnalytics,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
