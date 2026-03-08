@@ -201,6 +201,13 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to={basePath} replace />} />
 
+      {/* Admin routes — fully built */}
+      {Object.entries(ADMIN_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
       {/* Doctor routes — fully built */}
       {Object.entries(DOCTOR_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
