@@ -11,7 +11,8 @@ export type UserRole =
   | 'inventory_manager'
   | 'emergency'
   | 'hr_manager'
-  | 'scheduler';
+  | 'scheduler'
+  | 'dialysis_tech';
 
 export interface User {
   id: string;
