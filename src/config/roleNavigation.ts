@@ -68,6 +68,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'billing', label: 'Billing', path: '/pharmacy/billing' },
     { key: 'suppliers', label: 'Suppliers', path: '/pharmacy/suppliers' },
     { key: 'purchase', label: 'Purchase Orders', path: '/pharmacy/purchase' },
+    { key: 'schedule-h', label: 'Schedule H', path: '/pharmacy/schedule-h' },
     { key: 'queries', label: 'Queries', path: '/pharmacy/queries' },
   ],
   billing: [
