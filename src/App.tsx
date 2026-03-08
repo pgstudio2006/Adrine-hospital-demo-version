@@ -95,6 +95,20 @@ import BillingReports from "@/pages/billing/BillingReports";
 
 const queryClient = new QueryClient();
 
+const ADMIN_PAGES: Record<string, React.ComponentType> = {
+  '/admin': AdminDashboard,
+  '/admin/staff': AdminStaff,
+  '/admin/departments': AdminDepartments,
+  '/admin/finance': AdminFinance,
+  '/admin/expenses': AdminExpenses,
+  '/admin/approvals': AdminApprovals,
+  '/admin/claims': AdminClaims,
+  '/admin/mrd': AdminMRD,
+  '/admin/mis': AdminMIS,
+  '/admin/audit': AdminAudit,
+  '/admin/settings': AdminSettings,
+};
+
 const DOCTOR_PAGES: Record<string, React.ComponentType> = {
   '/doctor': DoctorDashboard,
   '/doctor/patients': DoctorPatients,
