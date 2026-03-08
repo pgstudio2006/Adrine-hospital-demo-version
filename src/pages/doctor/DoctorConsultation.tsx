@@ -193,6 +193,14 @@ export default function DoctorConsultation() {
         </motion.div>
       </div>
 
+      {/* AI Scribe Dialog */}
+      <ConsultationAIScribe
+        open={showAIScribe}
+        onClose={() => setShowAIScribe(false)}
+        onApply={handleAIScribeApply}
+        patientName={patientName}
+      />
+
       {/* Prescription Preview Dialog */}
       <PrescriptionPreview
         open={showPreview}
