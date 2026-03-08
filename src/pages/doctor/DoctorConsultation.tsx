@@ -166,9 +166,34 @@ export default function DoctorConsultation() {
             followUpUnit={followUpUnit} onFollowUpUnitChange={setFollowUpUnit}
             treatmentPlan={treatmentPlan} onTreatmentPlanChange={setTreatmentPlan}
             onSave={handleSaveConsultation} onDraft={() => {}}
+            onPreview={() => setShowPreview(true)}
           />
         </motion.div>
       </div>
+
+      {/* Prescription Preview Dialog */}
+      <PrescriptionPreview
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        data={{
+          patientName,
+          patientAge: patient?.age ?? 0,
+          patientGender: patient?.gender ?? 'Male',
+          uhid: patientId || '',
+          phone: patient?.phone,
+          doctorName: user?.name || 'Dr. Doctor',
+          department: patient?.department || 'General Medicine',
+          vitals,
+          complaints,
+          diagnoses,
+          medications,
+          labTests,
+          radiologyOrders,
+          advice,
+          followUpDays,
+          followUpUnit,
+        }}
+      />
     </div>
   );
 }
