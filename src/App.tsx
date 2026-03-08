@@ -265,6 +265,18 @@ const EMERGENCY_PAGES: Record<string, React.ComponentType> = {
   '/emergency/reports': EmergencyReports,
 };
 
+const HR_PAGES: Record<string, React.ComponentType> = {
+  '/hr': HRDashboard,
+  '/hr/staff': HRStaff,
+  '/hr/scheduling': HRScheduling,
+  '/hr/attendance': HRAttendance,
+  '/hr/leave': HRLeave,
+  '/hr/credentials': HRCredentials,
+  '/hr/training': HRTraining,
+  '/hr/performance': HRPerformance,
+  '/hr/reports': HRReports,
+};
+
 function AppRoutes() {
   const { user } = useAuth();
 
