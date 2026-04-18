@@ -1,144 +1,301 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, CreditCard, IndianRupee, Download, Printer, Eye, X, Banknote, Smartphone, Shield, FileText } from 'lucide-react';
+import { useMemo, useState } from "react";
+import {
+  Banknote,
+  CreditCard,
+  Eye,
+  FileText,
+  IndianRupee,
+  Plus,
+  Search,
+  Smartphone,
+  Undo2,
+  X,
+} from "lucide-react";
+import { useHospital, type BillingInvoice } from "@/stores/hospitalStore";
+import { AppSelect } from "@/components/ui/app-select";
 
-interface Invoice {
-  id: string;
-  uhid: string;
-  patientName: string;
-  appointmentId: string;
-  date: string;
-  billingCategory: 'OPD' | 'IPD' | 'Emergency' | 'Lab' | 'Pharmacy' | 'Radiology';
-  items: { description: string; serviceType: string; amount: number }[];
-  total: number;
-  paid: number;
-  status: 'paid' | 'partial' | 'pending' | 'overdue';
-  paymentMode?: 'cash' | 'card' | 'upi' | 'insurance' | 'mixed';
-  insuranceClaim?: number;
+const statusStyles: Record<BillingInvoice["status"], string> = {
+  paid: "bg-success/10 text-success",
+  partial: "bg-warning/10 text-warning",
+  pending: "bg-info/10 text-info",
+  overdue: "bg-destructive/10 text-destructive",
+};
+
+const paymentModeIcons: Record<NonNullable<BillingInvoice["paymentMode"]>, { icon: typeof CreditCard; label: string }> = {
+  cash: { icon: Banknote, label: "Cash" },
+  card: { icon: CreditCard, label: "Card" },
+  upi: { icon: Smartphone, label: "UPI" },
+  cheque: { icon: Banknote, label: "Cheque" },
+  "bank-transfer": { icon: CreditCard, label: "Bank Transfer" },
+};
+
+function inferServiceType(description: string) {
+  if (description.toLowerCase().includes("lab")) return "Lab";
+  if (description.toLowerCase().includes("radiology")) return "Radiology";
+  if (description.toLowerCase().includes("registration")) return "Registration";
+  if (description.toLowerCase().includes("consultation")) return "Consultation";
+  if (description.toLowerCase().includes("admission") || description.toLowerCase().includes("bed")) return "IPD";
+  return "Service";
 }
 
-const invoices: Invoice[] = [
-  { id: 'INV-5001', uhid: 'UHID-240001', patientName: 'Rajesh Sharma', appointmentId: 'APT-10001', date: '8 Mar 2026', billingCategory: 'OPD',
-    items: [{ description: 'Consultation - Cardiology', serviceType: 'Consultation', amount: 800 }, { description: 'ECG', serviceType: 'Diagnostic', amount: 500 }, { description: 'Blood Tests (CBC, Lipid)', serviceType: 'Lab', amount: 1200 }],
-    total: 2500, paid: 2500, status: 'paid', paymentMode: 'upi' },
-  { id: 'INV-5002', uhid: 'UHID-240002', patientName: 'Priya Patel', appointmentId: 'APT-10002', date: '8 Mar 2026', billingCategory: 'OPD',
-    items: [{ description: 'Consultation - Gynecology', serviceType: 'Consultation', amount: 1000 }, { description: 'Ultrasound', serviceType: 'Radiology', amount: 1500 }],
-    total: 2500, paid: 1000, status: 'partial', paymentMode: 'cash' },
-  { id: 'INV-5003', uhid: 'UHID-240003', patientName: 'Amit Kumar', appointmentId: 'APT-10003', date: '8 Mar 2026', billingCategory: 'Emergency',
-    items: [{ description: 'Emergency Consultation', serviceType: 'Emergency', amount: 1500 }, { description: 'X-Ray Chest', serviceType: 'Radiology', amount: 800 }, { description: 'Medicines', serviceType: 'Pharmacy', amount: 650 }],
-    total: 2950, paid: 0, status: 'pending' },
-  { id: 'INV-5004', uhid: 'UHID-240004', patientName: 'Sunita Devi', appointmentId: 'APT-10006', date: '7 Mar 2026', billingCategory: 'OPD',
-    items: [{ description: 'Consultation - Orthopedics', serviceType: 'Consultation', amount: 1000 }],
-    total: 1000, paid: 0, status: 'overdue' },
-  { id: 'INV-5005', uhid: 'UHID-240005', patientName: 'Vikram Singh', appointmentId: 'APT-10005', date: '8 Mar 2026', billingCategory: 'OPD',
-    items: [{ description: 'Consultation - ENT', serviceType: 'Consultation', amount: 700 }, { description: 'Audiometry', serviceType: 'Diagnostic', amount: 600 }],
-    total: 1300, paid: 1300, status: 'paid', paymentMode: 'card' },
-  { id: 'INV-5006', uhid: 'UHID-240006', patientName: 'Neha Gupta', appointmentId: 'APT-10004', date: '8 Mar 2026', billingCategory: 'OPD',
-    items: [{ description: 'Consultation - Dermatology', serviceType: 'Consultation', amount: 900 }, { description: 'Skin Biopsy', serviceType: 'Procedure', amount: 2000 }],
-    total: 2900, paid: 2900, status: 'paid', paymentMode: 'insurance', insuranceClaim: 2900 },
-  { id: 'INV-5007', uhid: 'UHID-240007', patientName: 'Arjun Reddy', appointmentId: 'APT-10007', date: '8 Mar 2026', billingCategory: 'IPD',
-    items: [{ description: 'Room Charges (3 days)', serviceType: 'IPD', amount: 6000 }, { description: 'Knee Replacement Surgery', serviceType: 'Procedure', amount: 85000 }, { description: 'Anaesthesia', serviceType: 'Procedure', amount: 8000 }, { description: 'Medicines', serviceType: 'Pharmacy', amount: 4500 }],
-    total: 103500, paid: 50000, status: 'partial', paymentMode: 'mixed', insuranceClaim: 50000 },
-];
-
-const statusStyles: Record<string, string> = {
-  paid: 'bg-success/10 text-success',
-  partial: 'bg-warning/10 text-warning',
-  pending: 'bg-info/10 text-info',
-  overdue: 'bg-destructive/10 text-destructive',
-};
-
-const paymentModeIcons: Record<string, { icon: typeof CreditCard; label: string }> = {
-  cash: { icon: Banknote, label: 'Cash' },
-  card: { icon: CreditCard, label: 'Card' },
-  upi: { icon: Smartphone, label: 'UPI' },
-  insurance: { icon: Shield, label: 'Insurance' },
-  mixed: { icon: CreditCard, label: 'Mixed' },
-};
-
 export default function ReceptionBilling() {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [selected, setSelected] = useState<Invoice | null>(null);
+  const {
+    patients,
+    invoices,
+    estimates,
+    createInvoice,
+    createEstimate,
+    convertEstimateToInvoice,
+    collectPayment,
+    refundPayment,
+  } = useHospital();
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | BillingInvoice["status"]>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | BillingInvoice["category"]>("all");
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+
   const [showNewInvoice, setShowNewInvoice] = useState(false);
-  const [paymentModal, setPaymentModal] = useState<Invoice | null>(null);
-  const [paymentMode, setPaymentMode] = useState<string>('cash');
+  const [showNewEstimate, setShowNewEstimate] = useState(false);
 
-  const totalRevenue = invoices.reduce((s, i) => s + i.paid, 0);
-  const totalPending = invoices.reduce((s, i) => s + (i.total - i.paid), 0);
-  const insuranceClaims = invoices.reduce((s, i) => s + (i.insuranceClaim || 0), 0);
+  const [paymentInvoiceId, setPaymentInvoiceId] = useState<string | null>(null);
+  const [paymentMode, setPaymentMode] = useState<NonNullable<BillingInvoice["paymentMode"]>>("cash");
+  const [paymentAmount, setPaymentAmount] = useState("");
 
-  const filtered = invoices.filter(inv => {
-    const matchSearch = inv.patientName.toLowerCase().includes(search.toLowerCase()) || inv.id.toLowerCase().includes(search.toLowerCase()) || inv.uhid.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || inv.status === filter;
-    const matchCategory = categoryFilter === 'all' || inv.billingCategory === categoryFilter;
-    return matchSearch && matchFilter && matchCategory;
-  });
+  const [refundInvoiceId, setRefundInvoiceId] = useState<string | null>(null);
+  const [refundMode, setRefundMode] = useState<NonNullable<BillingInvoice["paymentMode"]>>("upi");
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+
+  const [newInvoicePatient, setNewInvoicePatient] = useState("");
+  const [newInvoiceDescription, setNewInvoiceDescription] = useState("");
+  const [newInvoiceAmount, setNewInvoiceAmount] = useState("");
+  const [newInvoiceCategory, setNewInvoiceCategory] = useState<BillingInvoice["category"]>("OPD");
+
+  const [newEstimatePatient, setNewEstimatePatient] = useState("");
+  const [newEstimateDescription, setNewEstimateDescription] = useState("");
+  const [newEstimateAmount, setNewEstimateAmount] = useState("");
+  const [newEstimateCategory, setNewEstimateCategory] = useState<BillingInvoice["category"]>("OPD");
+
+  const totalRevenue = invoices.reduce((sum, invoice) => sum + invoice.paid, 0);
+  const totalPending = invoices.reduce((sum, invoice) => sum + Math.max(0, invoice.total - invoice.paid), 0);
+
+  const filteredInvoices = useMemo(() => {
+    const query = search.toLowerCase();
+    return invoices
+      .filter((invoice) => {
+        const matchesSearch =
+          invoice.patientName.toLowerCase().includes(query)
+          || invoice.id.toLowerCase().includes(query)
+          || invoice.uhid.toLowerCase().includes(query);
+        const matchesStatus = filter === "all" || invoice.status === filter;
+        const matchesCategory = categoryFilter === "all" || invoice.category === categoryFilter;
+        return matchesSearch && matchesStatus && matchesCategory;
+      })
+      .sort((left, right) => right.id.localeCompare(left.id));
+  }, [categoryFilter, filter, invoices, search]);
+
+  const draftEstimates = useMemo(() => {
+    const query = search.toLowerCase();
+    return estimates.filter((estimate) =>
+      estimate.status === "draft"
+      && (
+        estimate.patientName.toLowerCase().includes(query)
+        || estimate.id.toLowerCase().includes(query)
+        || estimate.uhid.toLowerCase().includes(query)
+      ));
+  }, [estimates, search]);
+
+  const selectedInvoice = invoices.find((invoice) => invoice.id === selectedInvoiceId) || null;
+  const paymentInvoice = invoices.find((invoice) => invoice.id === paymentInvoiceId) || null;
+  const refundInvoice = invoices.find((invoice) => invoice.id === refundInvoiceId) || null;
+
+  const openPaymentModal = (invoiceId: string) => {
+    const invoice = invoices.find((item) => item.id === invoiceId);
+    if (!invoice) return;
+
+    setPaymentInvoiceId(invoiceId);
+    setPaymentMode(invoice.paymentMode || "cash");
+    setPaymentAmount(String(Math.max(0, invoice.total - invoice.paid)));
+  };
+
+  const openRefundModal = (invoiceId: string) => {
+    const invoice = invoices.find((item) => item.id === invoiceId);
+    if (!invoice || invoice.paid <= 0) return;
+
+    setRefundInvoiceId(invoiceId);
+    setRefundMode(invoice.paymentMode as NonNullable<BillingInvoice["paymentMode"]> || "upi");
+    setRefundAmount(String(invoice.paid));
+    setRefundReason("");
+  };
+
+  const handleCreateInvoice = () => {
+    const patient = patients.find((item) => item.uhid === newInvoicePatient);
+    const amount = Number(newInvoiceAmount);
+    if (!patient || !newInvoiceDescription.trim() || amount <= 0) return;
+
+    createInvoice({
+      uhid: patient.uhid,
+      patientName: patient.name,
+      date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+      category: newInvoiceCategory,
+      items: [{ description: newInvoiceDescription.trim(), amount }],
+      total: amount,
+      paid: 0,
+      status: "pending",
+    });
+
+    setShowNewInvoice(false);
+    setNewInvoicePatient("");
+    setNewInvoiceDescription("");
+    setNewInvoiceAmount("");
+    setNewInvoiceCategory("OPD");
+  };
+
+  const handleCreateEstimate = () => {
+    const patient = patients.find((item) => item.uhid === newEstimatePatient);
+    const amount = Number(newEstimateAmount);
+    if (!patient || !newEstimateDescription.trim() || amount <= 0) return;
+
+    createEstimate({
+      uhid: patient.uhid,
+      patientName: patient.name,
+      date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+      category: newEstimateCategory,
+      items: [{ description: newEstimateDescription.trim(), amount }],
+      total: amount,
+    });
+
+    setShowNewEstimate(false);
+    setNewEstimatePatient("");
+    setNewEstimateDescription("");
+    setNewEstimateAmount("");
+    setNewEstimateCategory("OPD");
+  };
+
+  const handleCollectPayment = () => {
+    if (!paymentInvoice) return;
+    const amount = Number(paymentAmount);
+    if (!amount || amount <= 0) return;
+
+    collectPayment(paymentInvoice.id, amount, paymentMode);
+    setPaymentInvoiceId(null);
+    setPaymentAmount("");
+  };
+
+  const handleRefundPayment = () => {
+    if (!refundInvoice) return;
+    const amount = Number(refundAmount);
+    if (!amount || amount <= 0) return;
+
+    refundPayment(refundInvoice.id, amount, refundMode, refundReason || undefined);
+    setRefundInvoiceId(null);
+    setRefundAmount("");
+    setRefundReason("");
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate invoices and collect payments</p>
+          <p className="text-sm text-muted-foreground mt-1">Integrated billing desk with estimates, advances, and refunds</p>
         </div>
-        <button onClick={() => setShowNewInvoice(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> New Invoice
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowNewEstimate(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent transition-colors"
+          >
+            <FileText className="w-4 h-4" /> New Estimate
+          </button>
+          <button
+            onClick={() => setShowNewInvoice(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> New Invoice
+          </button>
+        </div>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Today's Collection</p>
-          <p className="text-xl font-bold flex items-center"><IndianRupee className="w-4 h-4" />{totalRevenue.toLocaleString('en-IN')}</p>
+          <p className="text-xs text-muted-foreground mb-1">Collected</p>
+          <p className="text-xl font-bold flex items-center"><IndianRupee className="w-4 h-4" />{totalRevenue.toLocaleString("en-IN")}</p>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Pending Amount</p>
-          <p className="text-xl font-bold flex items-center text-warning"><IndianRupee className="w-4 h-4" />{totalPending.toLocaleString('en-IN')}</p>
+          <p className="text-xs text-muted-foreground mb-1">Pending</p>
+          <p className="text-xl font-bold flex items-center text-warning"><IndianRupee className="w-4 h-4" />{totalPending.toLocaleString("en-IN")}</p>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Insurance Claims</p>
-          <p className="text-xl font-bold flex items-center text-info"><IndianRupee className="w-4 h-4" />{insuranceClaims.toLocaleString('en-IN')}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Invoices Today</p>
+          <p className="text-xs text-muted-foreground mb-1">Invoices</p>
           <p className="text-xl font-bold">{invoices.length}</p>
-          <p className="text-xs text-success">{invoices.filter(i => i.status === 'paid').length} paid</p>
+          <p className="text-xs text-success">{invoices.filter((invoice) => invoice.status === "paid").length} paid</p>
+        </div>
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">Draft Estimates</p>
+          <p className="text-xl font-bold">{draftEstimates.length}</p>
+          <p className="text-xs text-muted-foreground">ready to convert</p>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border bg-card text-sm" placeholder="Search invoices..." />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl border bg-card text-sm"
+            placeholder="Search invoices or estimates..."
+          />
         </div>
         <div className="flex gap-1.5">
-          {['all', 'paid', 'partial', 'pending', 'overdue'].map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+          {(["all", "paid", "partial", "pending", "overdue"] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === status ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+            >
+              {status === "all" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Category filter */}
       <div className="flex gap-1.5 overflow-x-auto">
-        {['all', 'OPD', 'IPD', 'Emergency', 'Lab', 'Pharmacy', 'Radiology'].map(c => (
-          <button key={c} onClick={() => setCategoryFilter(c)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === c ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}>
-            {c === 'all' ? 'All Categories' : c}
+        {(["all", "OPD", "IPD", "Emergency", "Lab", "Pharmacy", "Radiology"] as const).map((category) => (
+          <button
+            key={category}
+            onClick={() => setCategoryFilter(category)}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === category ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+          >
+            {category === "all" ? "All Categories" : category}
           </button>
         ))}
       </div>
 
+      {draftEstimates.length > 0 && (
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <p className="text-sm font-semibold">Estimate Queue</p>
+          <div className="space-y-2">
+            {draftEstimates.map((estimate) => (
+              <div key={estimate.id} className="rounded-lg border p-3 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-sm font-medium">{estimate.id} · {estimate.patientName}</p>
+                  <p className="text-xs text-muted-foreground">{estimate.category} · {estimate.items[0]?.description} · Rs {estimate.total.toLocaleString("en-IN")}</p>
+                </div>
+                <button
+                  onClick={() => convertEstimateToInvoice(estimate.id)}
+                  className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90"
+                >
+                  Convert to Invoice
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Invoice List */}
         <div className="lg:col-span-2 rounded-xl border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
@@ -148,108 +305,106 @@ export default function ReceptionBilling() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Category</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Amount</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Mode</th>
-                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map(inv => {
-                const modeInfo = inv.paymentMode ? paymentModeIcons[inv.paymentMode] : null;
-                return (
-                  <tr key={inv.id} onClick={() => setSelected(inv)} className={`hover:bg-accent/50 transition-colors cursor-pointer ${selected?.id === inv.id ? 'bg-accent/50' : ''}`}>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium">{inv.id}</p>
-                      <p className="text-xs text-muted-foreground">{inv.date}</p>
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <p className="text-sm">{inv.patientName}</p>
-                      <p className="text-xs text-muted-foreground">{inv.uhid}</p>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        inv.billingCategory === 'Emergency' ? 'bg-destructive/10 text-destructive' :
-                        inv.billingCategory === 'IPD' ? 'bg-info/10 text-info' :
-                        'bg-muted text-muted-foreground'
-                      }`}>{inv.billingCategory}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <p className="text-sm font-semibold">₹{inv.total.toLocaleString('en-IN')}</p>
-                      {inv.status === 'partial' && <p className="text-xs text-muted-foreground">Paid ₹{inv.paid.toLocaleString('en-IN')}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusStyles[inv.status]}`}>{inv.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-center hidden sm:table-cell">
-                      {modeInfo && <span className="text-xs text-muted-foreground">{modeInfo.label}</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button className="p-1.5 rounded hover:bg-accent"><Eye className="w-3.5 h-3.5 text-muted-foreground" /></button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredInvoices.map((invoice) => (
+                <tr
+                  key={invoice.id}
+                  onClick={() => setSelectedInvoiceId(invoice.id)}
+                  className={`hover:bg-accent/50 transition-colors cursor-pointer ${selectedInvoiceId === invoice.id ? "bg-accent/50" : ""}`}
+                >
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium">{invoice.id}</p>
+                    <p className="text-xs text-muted-foreground">{invoice.date}</p>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <p className="text-sm">{invoice.patientName}</p>
+                    <p className="text-xs text-muted-foreground">{invoice.uhid}</p>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{invoice.category}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <p className="text-sm font-semibold">Rs {invoice.total.toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">Paid Rs {invoice.paid.toLocaleString("en-IN")}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusStyles[invoice.status]}`}>{invoice.status}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button className="p-1.5 rounded hover:bg-accent">
+                      <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredInvoices.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">No invoices found for current filters.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Invoice Preview */}
         <div className="rounded-xl border bg-card p-5">
-          {selected ? (
+          {selectedInvoice ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{selected.id}</h3>
-                <div className="flex gap-1">
-                  <button className="p-1.5 rounded hover:bg-accent"><Printer className="w-4 h-4 text-muted-foreground" /></button>
-                  <button className="p-1.5 rounded hover:bg-accent"><Download className="w-4 h-4 text-muted-foreground" /></button>
-                </div>
+              <div>
+                <h3 className="font-semibold">{selectedInvoice.id}</h3>
+                <p className="text-xs text-muted-foreground">{selectedInvoice.patientName} ({selectedInvoice.uhid})</p>
               </div>
+
               <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Patient:</span> {selected.patientName} ({selected.uhid})</p>
-                <p><span className="text-muted-foreground">Date:</span> {selected.date}</p>
-                <p><span className="text-muted-foreground">Category:</span> {selected.billingCategory}</p>
-                <p><span className="text-muted-foreground">Appointment:</span> {selected.appointmentId}</p>
-                <p><span className="text-muted-foreground">Status:</span> <span className={`px-1.5 py-0.5 rounded-full text-xs ${statusStyles[selected.status]}`}>{selected.status}</span></p>
-                {selected.paymentMode && <p><span className="text-muted-foreground">Payment:</span> {paymentModeIcons[selected.paymentMode]?.label}</p>}
+                <p><span className="text-muted-foreground">Category:</span> {selectedInvoice.category}</p>
+                <p><span className="text-muted-foreground">Status:</span> <span className={`px-1.5 py-0.5 rounded-full text-xs ${statusStyles[selectedInvoice.status]}`}>{selectedInvoice.status}</span></p>
+                {selectedInvoice.paymentMode && <p><span className="text-muted-foreground">Last mode:</span> {paymentModeIcons[selectedInvoice.paymentMode]?.label}</p>}
               </div>
+
               <div className="border-t pt-3 space-y-2">
-                {selected.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
+                {selectedInvoice.items.map((item, index) => (
+                  <div key={`${selectedInvoice.id}-${index}`} className="flex justify-between text-sm">
                     <div>
                       <span>{item.description}</span>
-                      <span className="text-xs text-muted-foreground ml-1">({item.serviceType})</span>
+                      <span className="text-xs text-muted-foreground ml-1">({inferServiceType(item.description)})</span>
                     </div>
-                    <span className="font-medium">₹{item.amount.toLocaleString('en-IN')}</span>
+                    <span className="font-medium">Rs {item.amount.toLocaleString("en-IN")}</span>
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>₹{selected.total.toLocaleString('en-IN')}</span>
+                  <span>Rs {selectedInvoice.total.toLocaleString("en-IN")}</span>
                 </div>
-                {selected.insuranceClaim && selected.insuranceClaim > 0 && (
-                  <div className="flex justify-between text-sm text-info">
-                    <span>Insurance Claim</span>
-                    <span>₹{selected.insuranceClaim.toLocaleString('en-IN')}</span>
-                  </div>
+                <div className="flex justify-between text-sm text-success">
+                  <span>Paid</span>
+                  <span>Rs {selectedInvoice.paid.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-sm text-warning font-medium">
+                  <span>Balance</span>
+                  <span>Rs {Math.max(0, selectedInvoice.total - selectedInvoice.paid).toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {selectedInvoice.total - selectedInvoice.paid > 0 && (
+                  <button
+                    onClick={() => openPaymentModal(selectedInvoice.id)}
+                    className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <CreditCard className="w-4 h-4" /> Collect Advance / Payment
+                  </button>
                 )}
-                {selected.paid > 0 && selected.paid < selected.total && (
-                  <div className="flex justify-between text-sm text-success">
-                    <span>Paid</span>
-                    <span>₹{selected.paid.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {selected.total - selected.paid > 0 && (
-                  <div className="flex justify-between text-sm text-warning font-medium">
-                    <span>Balance Due</span>
-                    <span>₹{(selected.total - selected.paid).toLocaleString('en-IN')}</span>
-                  </div>
+                {selectedInvoice.paid > 0 && (
+                  <button
+                    onClick={() => openRefundModal(selectedInvoice.id)}
+                    className="w-full py-2 rounded-lg border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Undo2 className="w-4 h-4" /> Issue Refund
+                  </button>
                 )}
               </div>
-              {selected.status !== 'paid' && (
-                <button onClick={() => setPaymentModal(selected)}
-                  className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                  <CreditCard className="w-4 h-4" /> Collect Payment
-                </button>
-              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
@@ -260,60 +415,140 @@ export default function ReceptionBilling() {
         </div>
       </div>
 
-      {/* Payment Collection Modal */}
-      <AnimatePresence>
-        {paymentModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPaymentModal(null)}>
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-card border rounded-xl w-full max-w-md p-6 space-y-5" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold">Collect Payment</h2>
-                <button onClick={() => setPaymentModal(null)} className="p-1 rounded hover:bg-accent"><X className="w-5 h-5" /></button>
-              </div>
-              <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Invoice:</span> {paymentModal.id}</p>
-                <p><span className="text-muted-foreground">Patient:</span> {paymentModal.patientName}</p>
-                <p className="text-lg font-bold">Due: ₹{(paymentModal.total - paymentModal.paid).toLocaleString('en-IN')}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Payment Mode</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { key: 'cash', label: 'Cash', icon: Banknote },
-                    { key: 'card', label: 'Card', icon: CreditCard },
-                    { key: 'upi', label: 'UPI', icon: Smartphone },
-                    { key: 'insurance', label: 'Insurance', icon: Shield },
-                  ].map(m => (
-                    <button key={m.key} onClick={() => setPaymentMode(m.key)}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${paymentMode === m.key ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-accent'}`}>
-                      <m.icon className="w-4 h-4" /> {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
-                <input type="number" defaultValue={paymentModal.total - paymentModal.paid}
-                  className="w-full px-3 py-2 rounded-lg border bg-background text-sm" />
-              </div>
-              {paymentMode === 'insurance' && (
-                <div>
-                  <label className="text-sm font-medium mb-1 block">TPA / Insurance Reference</label>
-                  <input className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Claim reference number" />
-                </div>
-              )}
-              <div className="flex gap-2">
-                <button onClick={() => setPaymentModal(null)} className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
-                <button onClick={() => setPaymentModal(null)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center justify-center gap-2">
-                  <IndianRupee className="w-4 h-4" /> Confirm Payment
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showNewInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowNewInvoice(false)}>
+          <div className="bg-card border rounded-xl w-full max-w-lg p-6 space-y-5" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">New Invoice</h2>
+              <button onClick={() => setShowNewInvoice(false)} className="p-1 rounded hover:bg-accent"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <AppSelect
+                value={newInvoicePatient || undefined}
+                onValueChange={setNewInvoicePatient}
+                placeholder="Select patient"
+                options={patients.map((patient) => ({ value: patient.uhid, label: `${patient.name} (${patient.uhid})` }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
+              <AppSelect
+                value={newInvoiceCategory}
+                onValueChange={(value) => setNewInvoiceCategory(value as BillingInvoice["category"])}
+                options={(["OPD", "IPD", "Emergency", "Lab", "Pharmacy", "Radiology"] as const).map((category) => ({ value: category, label: category }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
+              <input value={newInvoiceDescription} onChange={(event) => setNewInvoiceDescription(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Description" />
+              <input type="number" value={newInvoiceAmount} onChange={(event) => setNewInvoiceAmount(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Amount" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowNewInvoice(false)} className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
+              <button onClick={handleCreateInvoice} className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Create Invoice</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewEstimate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowNewEstimate(false)}>
+          <div className="bg-card border rounded-xl w-full max-w-lg p-6 space-y-5" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">New Estimate</h2>
+              <button onClick={() => setShowNewEstimate(false)} className="p-1 rounded hover:bg-accent"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <AppSelect
+                value={newEstimatePatient || undefined}
+                onValueChange={setNewEstimatePatient}
+                placeholder="Select patient"
+                options={patients.map((patient) => ({ value: patient.uhid, label: `${patient.name} (${patient.uhid})` }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
+              <AppSelect
+                value={newEstimateCategory}
+                onValueChange={(value) => setNewEstimateCategory(value as BillingInvoice["category"])}
+                options={(["OPD", "IPD", "Emergency", "Lab", "Pharmacy", "Radiology"] as const).map((category) => ({ value: category, label: category }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
+              <input value={newEstimateDescription} onChange={(event) => setNewEstimateDescription(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Estimate line item" />
+              <input type="number" value={newEstimateAmount} onChange={(event) => setNewEstimateAmount(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Estimated amount" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowNewEstimate(false)} className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
+              <button onClick={handleCreateEstimate} className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Create Estimate</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {paymentInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPaymentInvoiceId(null)}>
+          <div className="bg-card border rounded-xl w-full max-w-md p-6 space-y-5" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Collect Payment</h2>
+              <button onClick={() => setPaymentInvoiceId(null)} className="p-1 rounded hover:bg-accent"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="text-sm space-y-1">
+              <p><span className="text-muted-foreground">Invoice:</span> {paymentInvoice.id}</p>
+              <p><span className="text-muted-foreground">Patient:</span> {paymentInvoice.patientName}</p>
+              <p className="text-lg font-bold">Balance: Rs {Math.max(0, paymentInvoice.total - paymentInvoice.paid).toLocaleString("en-IN")}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(["cash", "card", "upi"] as const).map((mode) => {
+                const ModeIcon = paymentModeIcons[mode].icon;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setPaymentMode(mode)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium ${paymentMode === mode ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  >
+                    <ModeIcon className="w-4 h-4" /> {paymentModeIcons[mode].label}
+                  </button>
+                );
+              })}
+            </div>
+            <input type="number" value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Amount" />
+            <div className="flex gap-2">
+              <button onClick={() => setPaymentInvoiceId(null)} className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
+              <button onClick={handleCollectPayment} className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {refundInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRefundInvoiceId(null)}>
+          <div className="bg-card border rounded-xl w-full max-w-md p-6 space-y-5" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Issue Refund</h2>
+              <button onClick={() => setRefundInvoiceId(null)} className="p-1 rounded hover:bg-accent"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="text-sm space-y-1">
+              <p><span className="text-muted-foreground">Invoice:</span> {refundInvoice.id}</p>
+              <p><span className="text-muted-foreground">Patient:</span> {refundInvoice.patientName}</p>
+              <p className="text-lg font-bold">Refundable: Rs {refundInvoice.paid.toLocaleString("en-IN")}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(["cash", "card", "upi"] as const).map((mode) => {
+                const ModeIcon = paymentModeIcons[mode].icon;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setRefundMode(mode)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium ${refundMode === mode ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  >
+                    <ModeIcon className="w-4 h-4" /> {paymentModeIcons[mode].label}
+                  </button>
+                );
+              })}
+            </div>
+            <input type="number" value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Refund amount" />
+            <input value={refundReason} onChange={(event) => setRefundReason(event.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Refund reason" />
+            <div className="flex gap-2">
+              <button onClick={() => setRefundInvoiceId(null)} className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
+              <button onClick={handleRefundPayment} className="flex-1 px-4 py-2 rounded-lg border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10">Process Refund</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

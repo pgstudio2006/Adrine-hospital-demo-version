@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { AppSelect } from '@/components/ui/app-select';
 import { toast } from 'sonner';
 import {
   Target, TrendingDown, TrendingUp, AlertTriangle, CheckCircle2,
@@ -57,6 +58,7 @@ const incidentLog = [
 
 export default function AdminKaizen() {
   const [showNewImprovement, setShowNewImprovement] = useState(false);
+  const [newInitiativeImpact, setNewInitiativeImpact] = useState('Critical Impact');
 
   const handleAddImprovement = () => {
     toast.success('Kaizen improvement initiative created');
@@ -232,9 +234,17 @@ export default function AdminKaizen() {
                 <Input placeholder="Owner" className="h-8 text-xs flex-1" />
               </div>
               <Textarea placeholder="Describe the improvement goal..." className="text-xs min-h-[60px] resize-none" />
-              <select className="w-full h-8 text-xs border rounded-md px-2 bg-background">
-                <option>Critical Impact</option><option>High Impact</option><option>Medium Impact</option><option>Low Impact</option>
-              </select>
+              <AppSelect
+                value={newInitiativeImpact}
+                onValueChange={setNewInitiativeImpact}
+                options={[
+                  { value: 'Critical Impact', label: 'Critical Impact' },
+                  { value: 'High Impact', label: 'High Impact' },
+                  { value: 'Medium Impact', label: 'Medium Impact' },
+                  { value: 'Low Impact', label: 'Low Impact' },
+                ]}
+                className="w-full h-8 text-xs"
+              />
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowNewImprovement(false)}>Cancel</Button>
                 <Button size="sm" className="flex-1" onClick={handleAddImprovement}>Create</Button>

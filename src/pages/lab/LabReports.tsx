@@ -1,195 +1,256 @@
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, Boxes, Download, FileText, Shield, Wrench } from "lucide-react";
-
-const DAILY_STATS = [
-  { category: "Hematology", ordered: 45, completed: 38, pending: 7, avgTAT: "42 min" },
-  { category: "Biochemistry", ordered: 62, completed: 50, pending: 12, avgTAT: "1h 15m" },
-  { category: "Microbiology", ordered: 18, completed: 8, pending: 10, avgTAT: "28h" },
-  { category: "Serology", ordered: 22, completed: 19, pending: 3, avgTAT: "2h 50m" },
-  { category: "Immunology", ordered: 8, completed: 6, pending: 2, avgTAT: "3h 20m" },
-  { category: "Molecular", ordered: 5, completed: 3, pending: 2, avgTAT: "6h" },
-];
-
-const QC_RECORDS = [
-  { id: "QC001", equipment: "Sysmex XN-1000 (Hematology)", control: "Normal Control", expected: "Hb 13.5±0.5", actual: "13.6", status: "Pass", date: "08:00 AM" },
-  { id: "QC002", equipment: "Sysmex XN-1000 (Hematology)", control: "Low Control", expected: "Hb 7.0±0.5", actual: "6.8", status: "Pass", date: "08:00 AM" },
-  { id: "QC003", equipment: "Beckman AU5800 (Biochemistry)", control: "Normal Control", expected: "Glucose 95±5", actual: "94", status: "Pass", date: "07:45 AM" },
-  { id: "QC004", equipment: "Beckman AU5800 (Biochemistry)", control: "High Control", expected: "Creatinine 8.0±0.5", actual: "8.7", status: "Fail", date: "07:45 AM" },
-  { id: "QC005", equipment: "Vitros 5600 (Immunoassay)", control: "Normal Control", expected: "TSH 2.5±0.3", actual: "2.4", status: "Pass", date: "07:30 AM" },
-];
-
-const INVENTORY = [
-  { item: "CBC Reagent (Sysmex)", batch: "SYS-2025-0312", stock: 120, unit: "tests", expiry: "Jun 2025", status: "Adequate" },
-  { item: "Glucose Reagent (Beckman)", batch: "BK-2025-0298", stock: 45, unit: "tests", expiry: "Apr 2025", status: "Low" },
-  { item: "PT/INR Cartridge (Stago)", batch: "ST-2025-0105", stock: 200, unit: "tests", expiry: "Sep 2025", status: "Adequate" },
-  { item: "Blood Culture Bottles", batch: "BD-2025-0450", stock: 15, unit: "bottles", expiry: "Aug 2025", status: "Critical" },
-  { item: "EDTA Tubes (Vacutainer)", batch: "BD-2025-0600", stock: 500, unit: "tubes", expiry: "Dec 2025", status: "Adequate" },
-  { item: "Serum Separator Tubes", batch: "BD-2025-0601", stock: 80, unit: "tubes", expiry: "Nov 2025", status: "Low" },
-];
-
-const AUDIT_LOG = [
-  { time: "10:30 AM", user: "Tech. Amit", action: "Entered results for LO-4514 (Lipid Profile)", patient: "Kiran Desai" },
-  { time: "10:00 AM", user: "Tech. Neha", action: "Entered results for LO-4512 (HIV, HBsAg, HCV)", patient: "Ravi Shankar" },
-  { time: "09:45 AM", user: "Dr. Pathak", action: "Validated & approved LO-4517", patient: "Meena Devi" },
-  { time: "09:25 AM", user: "Tech. Amit", action: "Received sample S-20250308-004", patient: "Arjun Reddy" },
-  { time: "09:00 AM", user: "Dr. Pathak", action: "Validated & approved LO-4510", patient: "Ajay Kumar" },
-  { time: "08:30 AM", user: "Dr. Pathak", action: "Rejected LO-4507 – requested retest", patient: "Nisha Patel" },
-  { time: "08:00 AM", user: "Tech. Amit", action: "Ran QC for Sysmex XN-1000 – All passed", patient: "—" },
-  { time: "07:45 AM", user: "Tech. Neha", action: "Ran QC for Beckman AU5800 – 1 failure (Creatinine high control)", patient: "—" },
-];
-
-const stockColor = (s: string) => {
-  if (s === "Critical") return "destructive";
-  if (s === "Low") return "secondary";
-  return "outline";
-};
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Download, FileText } from "lucide-react";
+import { useHospital } from "@/stores/hospitalStore";
 
 export default function LabReports() {
+  const { labOrders, invoices, updateLabOrder, updateLabStage } = useHospital();
+  const [search, setSearch] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [specimenType, setSpecimenType] = useState("Blood");
+  const [methodName, setMethodName] = useState("Automated analyzer");
+  const [results, setResults] = useState("");
+  const [interpretation, setInterpretation] = useState("");
+  const [comments, setComments] = useState("");
+  const [authorizedBy, setAuthorizedBy] = useState("Dr. Pathak");
+
+  const reportableOrders = useMemo(
+    () => labOrders.filter(order => order.stage === "Validated" || order.stage === "Reported"),
+    [labOrders],
+  );
+
+  const filteredOrders = reportableOrders.filter((order) => {
+    const query = search.toLowerCase();
+    return (
+      order.patientName.toLowerCase().includes(query) ||
+      order.orderId.toLowerCase().includes(query) ||
+      order.uhid.toLowerCase().includes(query)
+    );
+  });
+
+  const selectedOrder = labOrders.find(order => order.orderId === selectedOrderId) || null;
+
+  const billingByUhid = useMemo(() => {
+    const map = new Map<string, { paid: number; total: number; due: number }>();
+
+    invoices.forEach((invoice) => {
+      const current = map.get(invoice.uhid) || { paid: 0, total: 0, due: 0 };
+      current.paid += invoice.paid;
+      current.total += invoice.total;
+      current.due += Math.max(0, invoice.total - invoice.paid);
+      map.set(invoice.uhid, current);
+    });
+
+    return map;
+  }, [invoices]);
+
+  const openOrder = (orderId: string) => {
+    const order = labOrders.find(item => item.orderId === orderId);
+    if (!order) return;
+    setSelectedOrderId(orderId);
+    setSpecimenType(order.specimenType || "Blood");
+    setMethodName(order.methodName || "Automated analyzer");
+    setResults(order.results || "");
+    setInterpretation(order.interpretation || "");
+    setComments(order.comments || "");
+    setAuthorizedBy(order.authorizedBy || order.validatedBy || "Dr. Pathak");
+  };
+
+  const saveReportDraft = (release: boolean) => {
+    if (!selectedOrder) return;
+    updateLabOrder(selectedOrder.orderId, {
+      specimenType,
+      methodName,
+      results: results.trim(),
+      interpretation: interpretation.trim(),
+      comments: comments.trim(),
+      authorizedBy: authorizedBy.trim() || "Dr. Pathak",
+      validatedBy: authorizedBy.trim() || "Dr. Pathak",
+      criticalAlert: /critical|panic|urgent/i.test(`${results} ${interpretation}`),
+    });
+
+    if (release) {
+      updateLabStage(selectedOrder.orderId, "Reported");
+      setSelectedOrderId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">Statistics, quality control, inventory & audit trail</p>
+          <p className="text-sm text-muted-foreground mt-1">Released lab reports and validated result summaries</p>
         </div>
         <Button size="sm" variant="outline"><Download className="h-4 w-4 mr-1" /> Export Report</Button>
       </div>
 
-      <Tabs defaultValue="stats">
-        <TabsList>
-          <TabsTrigger value="stats"><BarChart3 className="h-3.5 w-3.5 mr-1" /> Statistics</TabsTrigger>
-          <TabsTrigger value="qc"><Wrench className="h-3.5 w-3.5 mr-1" /> Quality Control</TabsTrigger>
-          <TabsTrigger value="inventory"><Boxes className="h-3.5 w-3.5 mr-1" /> Inventory</TabsTrigger>
-          <TabsTrigger value="audit"><Shield className="h-3.5 w-3.5 mr-1" /> Audit Log</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Validated</p>
+            <p className="text-2xl font-bold">{labOrders.filter(order => order.stage === "Validated").length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Reported</p>
+            <p className="text-2xl font-bold">{labOrders.filter(order => order.stage === "Reported").length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Awaiting Validation</p>
+            <p className="text-2xl font-bold">{labOrders.filter(order => order.stage === "Awaiting Validation").length}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="stats" className="mt-4">
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Daily Test Volume & Turnaround Time</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Ordered</TableHead>
-                    <TableHead>Completed</TableHead>
-                    <TableHead>Pending</TableHead>
-                    <TableHead>Avg TAT</TableHead>
-                    <TableHead>Completion %</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {DAILY_STATS.map(s => (
-                    <TableRow key={s.category}>
-                      <TableCell className="text-sm font-medium text-foreground">{s.category}</TableCell>
-                      <TableCell className="text-sm font-mono">{s.ordered}</TableCell>
-                      <TableCell className="text-sm font-mono">{s.completed}</TableCell>
-                      <TableCell className="text-sm font-mono">{s.pending}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.avgTAT}</TableCell>
-                      <TableCell>
-                        <Badge variant={s.completed / s.ordered > 0.8 ? "default" : "secondary"} className="text-xs">
-                          {Math.round((s.completed / s.ordered) * 100)}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search patient, order, or UHID..." value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" />
+      </div>
 
-        <TabsContent value="qc" className="mt-4">
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quality Control Results — Today</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Equipment</TableHead>
-                    <TableHead>Control</TableHead>
-                    <TableHead>Expected</TableHead>
-                    <TableHead>Actual</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {QC_RECORDS.map(qc => (
-                    <TableRow key={qc.id}>
-                      <TableCell className="text-sm text-foreground">{qc.equipment}</TableCell>
-                      <TableCell className="text-sm">{qc.control}</TableCell>
-                      <TableCell className="text-xs font-mono text-muted-foreground">{qc.expected}</TableCell>
-                      <TableCell className="text-sm font-mono font-bold text-foreground">{qc.actual}</TableCell>
-                      <TableCell><Badge variant={qc.status === "Pass" ? "default" : "destructive"} className="text-xs">{qc.status}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{qc.date}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="mt-4">
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Laboratory Inventory</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Batch</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Expiry</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {INVENTORY.map(inv => (
-                    <TableRow key={inv.item}>
-                      <TableCell className="text-sm font-medium text-foreground">{inv.item}</TableCell>
-                      <TableCell className="text-xs font-mono text-muted-foreground">{inv.batch}</TableCell>
-                      <TableCell className="text-sm font-mono">{inv.stock} {inv.unit}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{inv.expiry}</TableCell>
-                      <TableCell><Badge variant={stockColor(inv.status)} className="text-xs">{inv.status}</Badge></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="audit" className="mt-4">
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Laboratory Audit Trail</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 divide-y divide-border">
-              {AUDIT_LOG.map((log, i) => (
-                <div key={i} className="px-4 py-3 flex items-center gap-4">
-                  <span className="text-xs text-muted-foreground min-w-[70px]">{log.time}</span>
-                  <span className="text-sm text-foreground font-medium min-w-[100px]">{log.user}</span>
-                  <span className="text-sm text-foreground flex-1">{log.action}</span>
-                  {log.patient !== "—" && <span className="text-xs text-muted-foreground">{log.patient}</span>}
-                </div>
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Lab Report Register</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order</TableHead>
+                <TableHead>Patient</TableHead>
+                <TableHead>Tests</TableHead>
+                <TableHead>Billing</TableHead>
+                <TableHead>Validator</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Reported</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No report-ready lab orders yet.</TableCell></TableRow>
+              ) : filteredOrders.map((order) => (
+                <TableRow key={order.orderId}>
+                  {(() => {
+                    const billing = billingByUhid.get(order.uhid);
+                    return (
+                      <>
+                  <TableCell className="font-mono text-sm">{order.orderId}</TableCell>
+                  <TableCell>
+                    <p className="font-medium">{order.patientName}</p>
+                    <p className="text-xs text-muted-foreground">{order.uhid}</p>
+                  </TableCell>
+                  <TableCell className="text-sm max-w-[280px] truncate">{order.tests}</TableCell>
+                  <TableCell className="text-xs">
+                    {billing ? (
+                      <div>
+                        <p className="font-medium text-foreground">Paid ₹{billing.paid.toLocaleString("en-IN")}</p>
+                        <p className="text-muted-foreground">Due ₹{billing.due.toLocaleString("en-IN")}</p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">No invoice</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{order.validatedBy || "Pending"}</TableCell>
+                  <TableCell>
+                    <Badge variant={order.stage === "Reported" ? "default" : "secondary"} className="text-xs">{order.stage}</Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{order.reportedAt || "Not released"}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => openOrder(order.orderId)}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                      </>
+                    );
+                  })()}
+                </TableRow>
               ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrderId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Lab Report {selectedOrder.orderId}</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Patient:</span> <span className="font-medium">{selectedOrder.patientName}</span></div>
+                <div><span className="text-muted-foreground">UHID:</span> {selectedOrder.uhid}</div>
+                <div><span className="text-muted-foreground">Doctor:</span> {selectedOrder.doctor}</div>
+                <div><span className="text-muted-foreground">Category:</span> {selectedOrder.category}</div>
+                <div>
+                  <span className="text-muted-foreground">Billing Paid:</span>{" "}
+                  ₹{(billingByUhid.get(selectedOrder.uhid)?.paid || 0).toLocaleString("en-IN")}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Billing Due:</span>{" "}
+                  ₹{(billingByUhid.get(selectedOrder.uhid)?.due || 0).toLocaleString("en-IN")}
+                </div>
+                <div><span className="text-muted-foreground">Specimen:</span> {selectedOrder.specimenType || "Not recorded"}</div>
+                <div><span className="text-muted-foreground">Method:</span> {selectedOrder.methodName || "Not recorded"}</div>
+                <div className="col-span-2"><span className="text-muted-foreground">Tests:</span> {selectedOrder.tests}</div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <p className="text-sm font-medium mb-1">Specimen Type</p>
+                  <Input value={specimenType} onChange={(event) => setSpecimenType(event.target.value)} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Method / Instrument</p>
+                  <Input value={methodName} onChange={(event) => setMethodName(event.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium mb-1">Results Summary</p>
+                  <Textarea rows={6} value={results} onChange={(event) => setResults(event.target.value)} placeholder="CBC values, chemistry values, organism growth, final numeric summary..." />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Interpretation</p>
+                  <Textarea rows={3} value={interpretation} onChange={(event) => setInterpretation(event.target.value)} placeholder="Clinical interpretation of the results..." />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Comments / Notes</p>
+                  <Textarea rows={3} value={comments} onChange={(event) => setComments(event.target.value)} placeholder="Pathologist comments, retest note, sample quality note..." />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Authorized By</p>
+                  <Input value={authorizedBy} onChange={(event) => setAuthorizedBy(event.target.value)} />
+                </div>
+              </div>
+              <div className="rounded-lg border p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final Report Preview</p>
+                <div className="text-sm space-y-2">
+                  <p><span className="font-medium">Specimen:</span> {specimenType}</p>
+                  <p><span className="font-medium">Method:</span> {methodName}</p>
+                  <p><span className="font-medium">Results:</span> {results || "Pending"}</p>
+                  <p><span className="font-medium">Interpretation:</span> {interpretation || "Pending"}</p>
+                  <p><span className="font-medium">Comments:</span> {comments || "None"}</p>
+                  <p><span className="font-medium">Authorized By:</span> {authorizedBy || "Pending"}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => saveReportDraft(false)}>Save Draft</Button>
+                <Button className="flex-1" onClick={() => saveReportDraft(true)}>Release Report</Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

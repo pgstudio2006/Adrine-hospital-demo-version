@@ -28,6 +28,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'mis', label: 'MIS Reports', path: '/admin/mis' },
     { key: 'audit', label: 'Audit', path: '/admin/audit' },
     { key: 'phonebook', label: 'Phone Book', path: '/admin/phonebook' },
+    { key: 'crm', label: 'CRM', path: '/admin/crm' },
     { key: 'settings', label: 'Settings', path: '/admin/settings' },
   ],
   doctor: [
@@ -42,6 +43,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
   ],
   nurse: [
     { key: 'dashboard', label: 'Dashboard', path: '/nurse' },
+    { key: 'task-board', label: 'Task Board', path: '/nurse/task-board' },
     { key: 'ward', label: 'My Ward', path: '/nurse/ward' },
     { key: 'admissions', label: 'Admissions', path: '/nurse/admissions' },
     { key: 'tasks', label: 'Tasks', path: '/nurse/tasks' },
@@ -73,6 +75,7 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'prescriptions', label: 'Prescriptions', path: '/pharmacy/prescriptions' },
     { key: 'inventory', label: 'Inventory', path: '/pharmacy/inventory' },
     { key: 'drugs', label: 'Drugs', path: '/pharmacy/drugs' },
+    { key: 'reports', label: 'Reports', path: '/pharmacy/reports' },
     { key: 'billing', label: 'Billing', path: '/pharmacy/billing' },
     { key: 'suppliers', label: 'Suppliers', path: '/pharmacy/suppliers' },
     { key: 'purchase', label: 'Purchase Orders', path: '/pharmacy/purchase' },
@@ -165,6 +168,14 @@ export const ROLE_TABS: Record<UserRole, RoleTab[]> = {
     { key: 'billing', label: 'Billing & Packages', path: '/dialysis/billing' },
     { key: 'reports', label: 'Reports', path: '/dialysis/reports' },
   ],
+  crm_manager: [
+    { key: 'dashboard', label: 'Dashboard', path: '/crm' },
+    { key: 'leads', label: 'Lead Pipeline', path: '/crm/leads' },
+    { key: 'lifecycle', label: 'Patient Lifecycle', path: '/crm/lifecycle' },
+    { key: 'campaigns', label: 'Care Journeys', path: '/crm/campaigns' },
+    { key: 'experience', label: 'Patient Experience', path: '/crm/experience' },
+    { key: 'reports', label: 'Analytics', path: '/crm/reports' },
+  ],
 };
 
 export const ROLE_BASE_PATH: Record<UserRole, string> = {
@@ -182,4 +193,5 @@ export const ROLE_BASE_PATH: Record<UserRole, string> = {
   hr_manager: '/hr',
   scheduler: '/scheduling',
   dialysis_tech: '/dialysis',
+  crm_manager: '/crm',
 };

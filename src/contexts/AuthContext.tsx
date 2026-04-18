@@ -3,7 +3,7 @@ import { User, UserRole, hasAccess, ModuleKey } from '@/types/roles';
 
 interface AuthContextType {
   user: User | null;
-  login: (role: UserRole, name: string) => void;
+  login: (role: UserRole, name: string, options?: { department?: string }) => void;
   logout: () => void;
   canAccess: (module: ModuleKey) => boolean;
 }
@@ -16,11 +16,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const login = useCallback((role: UserRole, name: string) => {
+  const login = useCallback((role: UserRole, name: string, options?: { department?: string }) => {
     const newUser: User = {
       id: crypto.randomUUID(),
       name,
       role,
+      department: options?.department,
     };
     setUser(newUser);
     localStorage.setItem('adrine_user', JSON.stringify(newUser));

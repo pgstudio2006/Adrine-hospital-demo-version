@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Clock, User, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarClock, BedDouble, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDoctorScope } from '@/hooks/useDoctorScope';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -9,182 +10,246 @@ const fadeIn = (i: number) => ({
   transition: { delay: i * 0.04, duration: 0.3 },
 });
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const hours = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-interface ScheduleSlot {
+type ScheduleEventType = 'appointment' | 'round';
+
+interface ScheduleEvent {
   id: string;
-  day: number;
-  startHour: number;
-  duration: number; // in hours
-  type: 'opd' | 'ipd-rounds' | 'surgery' | 'break' | 'meeting';
+  dayIndex: number;
   title: string;
-  location?: string;
-  patients?: number;
+  subtitle: string;
+  time: string;
+  sortMinutes: number;
+  type: ScheduleEventType;
 }
 
-const weekSchedule: ScheduleSlot[] = [
-  { id: '1', day: 0, startHour: 9, duration: 3, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 18 },
-  { id: '2', day: 0, startHour: 13, duration: 1, type: 'break', title: 'Lunch Break' },
-  { id: '3', day: 0, startHour: 14, duration: 2, type: 'ipd-rounds', title: 'IPD Rounds', location: 'Ward 3A', patients: 6 },
-  { id: '4', day: 0, startHour: 16, duration: 1, type: 'meeting', title: 'Department Meeting', location: 'Conference Room' },
-  { id: '5', day: 1, startHour: 9, duration: 2, type: 'surgery', title: 'Scheduled Surgery', location: 'OT-2' },
-  { id: '6', day: 1, startHour: 11, duration: 2, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 12 },
-  { id: '7', day: 1, startHour: 13, duration: 1, type: 'break', title: 'Lunch Break' },
-  { id: '8', day: 1, startHour: 14, duration: 3, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 15 },
-  { id: '9', day: 2, startHour: 9, duration: 3, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 20 },
-  { id: '10', day: 2, startHour: 13, duration: 1, type: 'break', title: 'Lunch Break' },
-  { id: '11', day: 2, startHour: 14, duration: 2, type: 'ipd-rounds', title: 'IPD Rounds', location: 'Ward 3A', patients: 8 },
-  { id: '12', day: 2, startHour: 16, duration: 1, type: 'meeting', title: 'CME Session', location: 'Auditorium' },
-  { id: '13', day: 3, startHour: 9, duration: 4, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 24 },
-  { id: '14', day: 3, startHour: 13, duration: 1, type: 'break', title: 'Lunch Break' },
-  { id: '15', day: 3, startHour: 14, duration: 2, type: 'ipd-rounds', title: 'IPD Rounds', location: 'Ward 3A', patients: 5 },
-  { id: '16', day: 4, startHour: 9, duration: 2, type: 'surgery', title: 'Scheduled Surgery', location: 'OT-1' },
-  { id: '17', day: 4, startHour: 11, duration: 2, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 10 },
-  { id: '18', day: 4, startHour: 13, duration: 1, type: 'break', title: 'Lunch Break' },
-  { id: '19', day: 4, startHour: 14, duration: 3, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 16 },
-  { id: '20', day: 5, startHour: 9, duration: 3, type: 'opd', title: 'OPD Consultation', location: 'Room 204', patients: 14 },
-  { id: '21', day: 5, startHour: 12, duration: 1, type: 'ipd-rounds', title: 'IPD Rounds', location: 'Ward 3A', patients: 4 },
-];
+function getStartOfWeek(offset: number) {
+  const today = new Date();
+  const currentDay = today.getDay();
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+  const monday = new Date(today);
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(today.getDate() + mondayOffset + offset * 7);
+  return monday;
+}
 
-const typeColors: Record<string, { bg: string; border: string; text: string }> = {
-  opd: { bg: 'bg-foreground/5', border: 'border-foreground/20', text: 'text-foreground' },
-  'ipd-rounds': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-700' },
-  surgery: { bg: 'bg-destructive/10', border: 'border-destructive/30', text: 'text-destructive' },
-  break: { bg: 'bg-muted', border: 'border-border', text: 'text-muted-foreground' },
-  meeting: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-700' },
+function addDays(base: Date, days: number) {
+  const date = new Date(base);
+  date.setDate(base.getDate() + days);
+  return date;
+}
+
+function toDateOnly(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function parseTimeToMinutes(input: string) {
+  const value = input.trim().toUpperCase();
+
+  if (value.includes('AM') || value.includes('PM')) {
+    const sanitized = value.replace(/\s+/g, '');
+    const isPm = sanitized.endsWith('PM');
+    const [hourRaw, minuteRaw] = sanitized.replace(/AM|PM/g, '').split(':');
+    const hour = Number(hourRaw) % 12 + (isPm ? 12 : 0);
+    const minute = Number(minuteRaw || '0');
+    return hour * 60 + minute;
+  }
+
+  const [hourRaw, minuteRaw] = value.split(':');
+  const hour = Number(hourRaw || '0');
+  const minute = Number(minuteRaw || '0');
+  return hour * 60 + minute;
+}
+
+function toDisplayTime(input: string) {
+  const minutes = parseTimeToMinutes(input);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const twelveHour = ((hours + 11) % 12) + 1;
+  return `${String(twelveHour).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+}
+
+const typeStyles: Record<ScheduleEventType, string> = {
+  appointment: 'bg-foreground/5 border border-foreground/20 text-foreground',
+  round: 'bg-blue-500/10 border border-blue-500/30 text-blue-700',
 };
 
-const weekSummary = [
-  { label: 'OPD Slots', value: '6', sub: '~129 patients' },
-  { label: 'Surgeries', value: '2', sub: 'Tue & Fri' },
-  { label: 'IPD Rounds', value: '4', sub: '~23 patients' },
-  { label: 'Meetings', value: '2', sub: 'Mon & Wed' },
-];
-
 export default function DoctorSchedule() {
+  const { isDoctor, doctorName, department, appointments, admissions } = useDoctorScope();
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const today = new Date();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay() + 1 + weekOffset * 7);
+  const weekStart = useMemo(() => getStartOfWeek(weekOffset), [weekOffset]);
+  const weekDays = useMemo(() => DAYS.map((_, index) => addDays(weekStart, index)), [weekStart]);
+  const weekStartMs = toDateOnly(weekDays[0]);
+  const weekEndMs = toDateOnly(weekDays[6]);
 
-  const dateLabels = days.map((_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  });
+  const events = useMemo<ScheduleEvent[]>(() => {
+    const next: ScheduleEvent[] = [];
 
-  const isToday = (dayIdx: number) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + dayIdx);
-    return d.toDateString() === today.toDateString();
-  };
+    appointments.forEach((appointment) => {
+      const appointmentDate = new Date(`${appointment.date}T00:00:00`);
+      const appointmentMs = toDateOnly(appointmentDate);
+      if (appointmentMs < weekStartMs || appointmentMs > weekEndMs) {
+        return;
+      }
+
+      const dayIndex = weekDays.findIndex((day) => toDateOnly(day) === appointmentMs);
+      if (dayIndex < 0) {
+        return;
+      }
+
+      next.push({
+        id: appointment.id,
+        dayIndex,
+        title: appointment.patientName,
+        subtitle: `${appointment.type} · ${appointment.status}`,
+        time: toDisplayTime(appointment.time),
+        sortMinutes: parseTimeToMinutes(appointment.time),
+        type: 'appointment',
+      });
+    });
+
+    admissions
+      .filter((admission) => admission.status !== 'discharged')
+      .forEach((admission) => {
+        const roundTime = admission.nextDoctorRoundAt || '11:00 AM';
+        if (roundTime.toLowerCase().includes('every')) {
+          return;
+        }
+
+        const minutes = parseTimeToMinutes(roundTime);
+        weekDays.forEach((_, dayIndex) => {
+          next.push({
+            id: `${admission.id}-${dayIndex}`,
+            dayIndex,
+            title: `IPD Round · ${admission.patientName}`,
+            subtitle: `${admission.ward} · ${admission.bed}`,
+            time: toDisplayTime(roundTime),
+            sortMinutes: minutes,
+            type: 'round',
+          });
+        });
+      });
+
+    return next.sort((a, b) => a.dayIndex - b.dayIndex || a.sortMinutes - b.sortMinutes);
+  }, [admissions, appointments, weekDays, weekEndMs, weekStartMs]);
+
+  const eventsByDay = useMemo(() => {
+    return DAYS.map((_, dayIndex) => events.filter((event) => event.dayIndex === dayIndex));
+  }, [events]);
+
+  const weekAppointments = events.filter((event) => event.type === 'appointment');
+  const completedAppointments = weekAppointments.filter((event) => event.subtitle.includes('completed')).length;
+  const pendingAppointments = weekAppointments.length - completedAppointments;
+  const roundsPlanned = events.filter((event) => event.type === 'round').length;
+  const availableSlots = Math.max(0, 70 - weekAppointments.length);
+
+  if (!isDoctor) {
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Access denied. Only doctor users can view schedules.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <motion.div {...fadeIn(0)} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Weekly Schedule</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your clinic hours and rounds</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {doctorName} · {department || 'All Departments'}
+          </p>
         </div>
+
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset(w => w - 1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset((prev) => prev - 1)}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <button onClick={() => setWeekOffset(0)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-muted hover:bg-accent transition-colors">
+          <button
+            onClick={() => setWeekOffset(0)}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-muted hover:bg-accent transition-colors"
+          >
             This Week
           </button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset(w => w + 1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset((prev) => prev + 1)}>
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <Button size="sm" className="gap-1.5 ml-2">
-            <Plus className="w-3.5 h-3.5" /> Add Slot
-          </Button>
         </div>
       </motion.div>
 
-      {/* Summary */}
       <motion.div {...fadeIn(1)} className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {weekSummary.map(s => (
-          <div key={s.label} className="border rounded-xl p-4 bg-card">
-            <p className="text-xl font-bold">{s.value}</p>
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</p>
-          </div>
-        ))}
-      </motion.div>
-
-      {/* Calendar Grid */}
-      <motion.div {...fadeIn(2)} className="border rounded-xl bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="min-w-[900px]">
-            {/* Day Headers */}
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
-              <div className="p-2" />
-              {days.map((day, i) => (
-                <div key={day} className={`p-3 text-center border-l ${isToday(i) ? 'bg-foreground/5' : ''}`}>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{day.slice(0, 3)}</p>
-                  <p className={`text-sm font-semibold mt-0.5 ${isToday(i) ? 'text-foreground' : 'text-muted-foreground'}`}>{dateLabels[i]}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Time Grid */}
-            {hours.map((hour, hIdx) => (
-              <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b last:border-b-0">
-                <div className="p-2 text-[11px] text-muted-foreground font-mono text-right pr-3 pt-3">
-                  {hour}
-                </div>
-                {days.map((_, dayIdx) => {
-                  const slot = weekSchedule.find(s => s.day === dayIdx && s.startHour === hIdx + 9);
-                  const isCovered = weekSchedule.find(s => s.day === dayIdx && s.startHour < hIdx + 9 && s.startHour + s.duration > hIdx + 9);
-
-                  if (isCovered) return <div key={dayIdx} className="border-l" />;
-
-                  if (slot) {
-                    const colors = typeColors[slot.type];
-                    return (
-                      <div
-                        key={dayIdx}
-                        className={`border-l p-1.5 ${isToday(dayIdx) ? 'bg-foreground/[0.02]' : ''}`}
-                        style={{ gridRow: `span ${slot.duration}` }}
-                      >
-                        <div className={`${colors.bg} border ${colors.border} rounded-lg p-2 h-full cursor-pointer hover:shadow-sm transition-shadow`}>
-                          <p className={`text-[11px] font-semibold ${colors.text} truncate`}>{slot.title}</p>
-                          {slot.location && (
-                            <p className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                              <MapPin className="w-2.5 h-2.5" /> {slot.location}
-                            </p>
-                          )}
-                          {slot.patients && (
-                            <p className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                              <User className="w-2.5 h-2.5" /> {slot.patients} patients
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div key={dayIdx} className={`border-l min-h-[60px] ${isToday(dayIdx) ? 'bg-foreground/[0.02]' : ''}`} />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+        <div className="border rounded-xl p-4 bg-card">
+          <p className="text-xl font-bold">{weekAppointments.length}</p>
+          <p className="text-xs text-muted-foreground">Appointments</p>
+        </div>
+        <div className="border rounded-xl p-4 bg-card">
+          <p className="text-xl font-bold text-emerald-600">{completedAppointments}</p>
+          <p className="text-xs text-muted-foreground">Completed</p>
+        </div>
+        <div className="border rounded-xl p-4 bg-card">
+          <p className="text-xl font-bold text-amber-600">{pendingAppointments}</p>
+          <p className="text-xs text-muted-foreground">Pending</p>
+        </div>
+        <div className="border rounded-xl p-4 bg-card">
+          <p className="text-xl font-bold text-blue-700">{availableSlots}</p>
+          <p className="text-xs text-muted-foreground">Available Slots</p>
         </div>
       </motion.div>
 
-      {/* Legend */}
+      <motion.div {...fadeIn(2)} className="grid grid-cols-1 lg:grid-cols-7 gap-3">
+        {weekDays.map((day, index) => {
+          const dayEvents = eventsByDay[index];
+          const isToday = toDateOnly(day) === toDateOnly(new Date());
+
+          return (
+            <div key={day.toISOString()} className={`border rounded-xl bg-card min-h-[360px] ${isToday ? 'ring-1 ring-foreground/20' : ''}`}>
+              <div className="p-3 border-b">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{DAYS[index].slice(0, 3)}</p>
+                <p className="text-sm font-semibold">
+                  {day.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                </p>
+              </div>
+
+              <div className="p-2 space-y-2 max-h-[300px] overflow-y-auto">
+                {dayEvents.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+                    No slots planned
+                  </div>
+                )}
+
+                {dayEvents.map((event) => (
+                  <div key={event.id} className={`rounded-lg p-2 ${typeStyles[event.type]}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-semibold leading-tight">{event.title}</p>
+                      <span className="text-[10px] font-semibold whitespace-nowrap">{event.time}</span>
+                    </div>
+                    <p className="text-[11px] mt-1 opacity-80">{event.subtitle}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </motion.div>
+
       <motion.div {...fadeIn(3)} className="flex items-center gap-4 text-[11px] text-muted-foreground">
-        {Object.entries(typeColors).map(([key, colors]) => (
-          <span key={key} className="flex items-center gap-1.5">
-            <span className={`w-3 h-3 rounded ${colors.bg} border ${colors.border}`} />
-            {key === 'ipd-rounds' ? 'IPD Rounds' : key.charAt(0).toUpperCase() + key.slice(1)}
-          </span>
-        ))}
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-foreground/5 border border-foreground/20" />
+          <User className="w-3 h-3" /> OPD Appointment
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30" />
+          <BedDouble className="w-3 h-3" /> IPD Round
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CalendarClock className="w-3 h-3" /> {roundsPlanned} round slot(s)
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Clock className="w-3 h-3" /> Week starts Monday
+        </span>
       </motion.div>
     </div>
   );

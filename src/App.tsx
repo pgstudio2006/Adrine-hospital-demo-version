@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { TenantSettingsProvider } from "@/contexts/TenantSettingsContext";
+import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { HospitalProvider } from "@/stores/hospitalStore";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import AppLayout from "@/components/AppLayout";
 import RolePlaceholder from "@/components/RolePlaceholder";
-import { ROLE_TABS, ROLE_BASE_PATH } from "@/config/roleNavigation";
+import { ROLE_BASE_PATH, ROLE_TABS } from "@/config/roleNavigation";
 import NotFound from "./pages/NotFound";
 
 // Doctor pages
@@ -27,6 +29,7 @@ import DoctorRadiology from "@/pages/doctor/DoctorRadiology";
 
 // Nurse pages
 import NurseDashboard from "@/pages/nurse/NurseDashboard";
+import NurseTaskBoard from "@/pages/nurse/NurseTaskBoard";
 import NurseWard from "@/pages/nurse/NurseWard";
 import NurseAdmissions from "@/pages/nurse/NurseAdmissions";
 import NurseTasks from "@/pages/nurse/NurseTasks";
@@ -59,6 +62,7 @@ import PharmacyPrescriptions from "@/pages/pharmacy/PharmacyPrescriptions";
 import PharmacyInventory from "@/pages/pharmacy/PharmacyInventory";
 import PharmacyDrugs from "@/pages/pharmacy/PharmacyDrugs";
 import PharmacyBilling from "@/pages/pharmacy/PharmacyBilling";
+import PharmacyReports from "@/pages/pharmacy/PharmacyReports";
 import PharmacySuppliers from "@/pages/pharmacy/PharmacySuppliers";
 import PharmacyPurchase from "@/pages/pharmacy/PharmacyPurchase";
 import PharmacyQueries from "@/pages/pharmacy/PharmacyQueries";
@@ -174,6 +178,15 @@ import DialysisConsumables from "@/pages/dialysis/DialysisConsumables";
 import DialysisBilling from "@/pages/dialysis/DialysisBilling";
 import DialysisReports from "@/pages/dialysis/DialysisReports";
 
+// CRM pages
+import CRMDashboard from "@/pages/crm/CRMDashboard";
+import LeadManagement from "@/pages/crm/LeadManagement";
+import Campaigns from "@/pages/crm/Campaigns";
+import FeedbackSurveys from "@/pages/crm/FeedbackSurveys";
+import PatientLifecycle from "@/pages/crm/PatientLifecycle";
+import CRMAnalytics from "@/pages/crm/CRMAnalytics";
+
+
 const queryClient = new QueryClient();
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
@@ -213,6 +226,7 @@ const DOCTOR_PAGES: Record<string, React.ComponentType> = {
 
 const NURSE_PAGES: Record<string, React.ComponentType> = {
   '/nurse': NurseDashboard,
+  '/nurse/task-board': NurseTaskBoard,
   '/nurse/ward': NurseWard,
   '/nurse/admissions': NurseAdmissions,
   '/nurse/tasks': NurseTasks,
@@ -247,6 +261,7 @@ const PHARMACY_PAGES: Record<string, React.ComponentType> = {
   '/pharmacy/prescriptions': PharmacyPrescriptions,
   '/pharmacy/inventory': PharmacyInventory,
   '/pharmacy/drugs': PharmacyDrugs,
+  '/pharmacy/reports': PharmacyReports,
   '/pharmacy/billing': PharmacyBilling,
   '/pharmacy/suppliers': PharmacySuppliers,
   '/pharmacy/purchase': PharmacyPurchase,
@@ -348,8 +363,20 @@ const DIALYSIS_PAGES: Record<string, React.ComponentType> = {
   '/dialysis/reports': DialysisReports,
 };
 
+const CRM_PAGES: Record<string, React.ComponentType> = {
+  '/crm': CRMDashboard,
+  '/crm/leads': LeadManagement,
+  '/crm/lifecycle': PatientLifecycle,
+  '/crm/campaigns': Campaigns,
+  '/crm/experience': FeedbackSurveys,
+  '/crm/reports': CRMAnalytics,
+  '/admin/crm': CRMDashboard,
+};
+
+
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { getTabsForRole } = useTenantSettings();
 
   if (!user) {
     return (
@@ -360,8 +387,14 @@ function AppRoutes() {
     );
   }
 
-  const basePath = ROLE_BASE_PATH[user.role];
-  const tabs = ROLE_TABS[user.role];
+  if (!user.role || !ROLE_TABS[user.role]) {
+    console.warn("Invalid role detected, clearing session", user.role);
+    logout();
+    return <Navigate to="/" replace />;
+  }
+
+  const basePath = ROLE_BASE_PATH[user.role] || "/";
+  const tabs = getTabsForRole(user.role) || [];
 
   return (
     <Routes>
@@ -378,12 +411,26 @@ function AppRoutes() {
 
       {Object.entries(DOCTOR_PAGES).map(([path, Component]) => (
         <Route key={path} path={path} element={
-          <AppLayout><Component /></AppLayout>
+          user.role === 'doctor'
+            ? <AppLayout><Component /></AppLayout>
+            : <Navigate to={basePath} replace />
         } />
       ))}
-      <Route path="/doctor/patients/:patientId" element={<AppLayout><DoctorPatientProfile /></AppLayout>} />
-      <Route path="/doctor/ipd/:patientId" element={<AppLayout><DoctorIPDPatientProfile /></AppLayout>} />
-      <Route path="/doctor/consultation/:patientId" element={<AppLayout><DoctorConsultation /></AppLayout>} />
+      <Route path="/doctor/patients/:patientId" element={
+        user.role === 'doctor'
+          ? <AppLayout><DoctorPatientProfile /></AppLayout>
+          : <Navigate to={basePath} replace />
+      } />
+      <Route path="/doctor/ipd/:patientId" element={
+        user.role === 'doctor'
+          ? <AppLayout><DoctorIPDPatientProfile /></AppLayout>
+          : <Navigate to={basePath} replace />
+      } />
+      <Route path="/doctor/consultation/:patientId" element={
+        user.role === 'doctor'
+          ? <AppLayout><DoctorConsultation /></AppLayout>
+          : <Navigate to={basePath} replace />
+      } />
 
       {/* Nurse routes — fully built */}
       {Object.entries(NURSE_PAGES).map(([path, Component]) => (
@@ -469,8 +516,16 @@ function AppRoutes() {
         } />
       ))}
 
+      {/* CRM routes — fully built */}
+      {Object.entries(CRM_PAGES).map(([path, Component]) => (
+        <Route key={path} path={path} element={
+          <AppLayout><Component /></AppLayout>
+        } />
+      ))}
+
+
       {/* Dashboard route for other roles */}
-      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && user.role !== 'hr_manager' && user.role !== 'scheduler' && user.role !== 'dialysis_tech' && (
+      {user.role !== 'doctor' && user.role !== 'receptionist' && user.role !== 'nurse' && user.role !== 'lab_technician' && user.role !== 'pharmacist' && user.role !== 'radiologist' && user.role !== 'billing' && user.role !== 'admin' && user.role !== 'ot_coordinator' && user.role !== 'inventory_manager' && user.role !== 'emergency' && user.role !== 'hr_manager' && user.role !== 'scheduler' && user.role !== 'dialysis_tech' && user.role !== 'crm_manager' && (
         <Route path={basePath} element={
           <AppLayout><DashboardPage /></AppLayout>
         } />
@@ -479,7 +534,7 @@ function AppRoutes() {
       {/* All other role tabs as placeholders */}
       {tabs
         .filter(t => t.key !== 'dashboard')
-        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path] && !HR_PAGES[t.path] && !SCHEDULING_PAGES[t.path] && !DIALYSIS_PAGES[t.path])
+        .filter(t => !ADMIN_PAGES[t.path] && !DOCTOR_PAGES[t.path] && !RECEPTION_PAGES[t.path] && !NURSE_PAGES[t.path] && !LAB_PAGES[t.path] && !PHARMACY_PAGES[t.path] && !RADIOLOGY_PAGES[t.path] && !BILLING_PAGES[t.path] && !OT_PAGES[t.path] && !INVENTORY_PAGES[t.path] && !EMERGENCY_PAGES[t.path] && !HR_PAGES[t.path] && !SCHEDULING_PAGES[t.path] && !DIALYSIS_PAGES[t.path] && !CRM_PAGES[t.path])
         .map(tab => (
           <Route key={tab.key} path={tab.path} element={
             <AppLayout>
@@ -498,15 +553,17 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <HospitalProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </HospitalProvider>
-      </AuthProvider>
+      <TenantSettingsProvider>
+        <AuthProvider>
+          <HospitalProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </HospitalProvider>
+        </AuthProvider>
+      </TenantSettingsProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -5,7 +5,7 @@ import { Search, Play, SkipForward, X, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useHospital } from '@/stores/hospitalStore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useDoctorScope } from '@/hooks/useDoctorScope';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -22,23 +22,21 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function DoctorQueue() {
-  const { queue, updateQueueStatus, nextQueuePatient } = useHospital();
-  const { user } = useAuth();
+  const { updateQueueStatus, nextQueuePatient } = useHospital();
+  const { isDoctor, doctorName, department, queue } = useDoctorScope();
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  // Show all queue entries (in real app, filter by doctor)
-  const myQueue = queue;
+  const myQueue = [...queue].sort((a, b) => a.tokenNo - b.tokenNo);
   const waiting = myQueue.filter(q => q.status === 'waiting').length;
   const completed = myQueue.filter(q => q.status === 'completed').length;
   const current = myQueue.find(q => q.status === 'in-consultation');
 
   const handleNext = () => {
-    // Move next waiting to in-consultation
-    const currentEntry = myQueue.find(q => q.status === 'in-consultation');
-    if (currentEntry) updateQueueStatus(currentEntry.tokenNo, 'completed');
-    const nextEntry = myQueue.find(q => q.status === 'waiting');
-    if (nextEntry) updateQueueStatus(nextEntry.tokenNo, 'in-consultation');
+    if (!doctorName) {
+      return;
+    }
+    nextQueuePatient(doctorName);
   };
 
   const handleStart = (tokenNo: number) => {
@@ -54,13 +52,21 @@ export default function DoctorQueue() {
     p.patientName.toLowerCase().includes(search.toLowerCase()) || String(p.tokenNo).includes(search)
   );
 
+  if (!isDoctor) {
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Access denied. Only doctor users can access the OPD queue.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <motion.div {...fadeIn(0)} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">OPD Queue</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            <span className="font-semibold text-foreground">{waiting}</span> waiting · <span className="font-semibold text-foreground">{completed}</span> completed · Token {current?.tokenNo ?? '—'}
+            {doctorName} · {department || 'All Departments'} · <span className="font-semibold text-foreground">{waiting}</span> waiting · <span className="font-semibold text-foreground">{completed}</span> completed · Token {current?.tokenNo ?? '—'}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleNext} className="gap-1.5">

@@ -1,14 +1,28 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, CalendarDays, FlaskConical, Building2, Clock,
-  ArrowUpRight, ArrowDownRight, CheckCircle2, AlertTriangle,
-  Stethoscope, FileText, Activity, ChevronRight
+  Users,
+  CalendarDays,
+  FlaskConical,
+  Building2,
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertTriangle,
+  ChevronRight,
 } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, BarChart, Bar
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
 } from 'recharts';
-import { useAuth } from '@/contexts/AuthContext';
+import { useHospital } from '@/stores/hospitalStore';
+import { useDoctorScope } from '@/hooks/useDoctorScope';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -16,65 +30,13 @@ const fadeIn = (i: number) => ({
   transition: { delay: i * 0.04, duration: 0.3 },
 });
 
-const stats = [
-  { label: 'My Patients', value: '47', change: '+3 today', up: true, icon: Users },
-  { label: 'OPD Queue', value: '12', change: '3 urgent', up: false, icon: CalendarDays },
-  { label: 'Pending Reports', value: '8', change: '-2 since AM', up: true, icon: FlaskConical },
-  { label: 'IPD Rounds Due', value: '6', change: '2 critical', up: false, icon: Building2 },
-];
-
-const weeklyPatients = [
-  { day: 'Mon', opd: 18, ipd: 4 },
-  { day: 'Tue', opd: 22, ipd: 5 },
-  { day: 'Wed', opd: 15, ipd: 3 },
-  { day: 'Thu', opd: 24, ipd: 6 },
-  { day: 'Fri', opd: 20, ipd: 4 },
-  { day: 'Sat', opd: 12, ipd: 2 },
-  { day: 'Sun', opd: 5, ipd: 1 },
-];
-
-const consultationTrend = [
-  { hour: '9AM', count: 3 },
-  { hour: '10AM', count: 5 },
-  { hour: '11AM', count: 4 },
-  { hour: '12PM', count: 6 },
-  { hour: '1PM', count: 2 },
-  { hour: '2PM', count: 5 },
-  { hour: '3PM', count: 7 },
-  { hour: '4PM', count: 4 },
-  { hour: '5PM', count: 3 },
-];
-
-const todayAppointments = [
-  { time: '10:00 AM', patient: 'Rajesh Kumar', age: 45, type: 'Follow-up', status: 'completed' },
-  { time: '10:30 AM', patient: 'Priya Sharma', age: 32, type: 'New Visit', status: 'in-progress' },
-  { time: '11:00 AM', patient: 'Amit Singh', age: 58, type: 'Follow-up', status: 'waiting' },
-  { time: '11:30 AM', patient: 'Sunita Devi', age: 41, type: 'Emergency', status: 'waiting' },
-  { time: '12:00 PM', patient: 'Mohammed Ali', age: 67, type: 'Follow-up', status: 'scheduled' },
-  { time: '2:00 PM', patient: 'Kavita Reddy', age: 29, type: 'New Visit', status: 'scheduled' },
-  { time: '2:30 PM', patient: 'Suresh Patel', age: 53, type: 'Review', status: 'scheduled' },
-  { time: '3:00 PM', patient: 'Anita Gupta', age: 38, type: 'Follow-up', status: 'scheduled' },
-];
-
-const pendingLabs = [
-  { patient: 'Rajesh Kumar', test: 'CBC + ESR', ordered: '2h ago', priority: 'routine' },
-  { patient: 'Priya Sharma', test: 'Lipid Profile', ordered: '3h ago', priority: 'routine' },
-  { patient: 'Amit Singh', test: 'HbA1c + FBS', ordered: '1h ago', priority: 'urgent' },
-  { patient: 'Sunita Devi', test: 'Thyroid Panel', ordered: '4h ago', priority: 'routine' },
-  { patient: 'Mohammed Ali', test: 'Renal Function', ordered: '30m ago', priority: 'urgent' },
-];
-
-const criticalAlerts = [
-  { patient: 'Bed 12A — Rajesh Kumar', message: 'SpO2 dropped to 89%, needs review', time: '5 min ago', severity: 'critical' },
-  { patient: 'Bed 8B — Sunita Devi', message: 'Blood sugar 320 mg/dL, insulin adjustment needed', time: '15 min ago', severity: 'warning' },
-  { patient: 'Bed 3C — Mohammed Ali', message: 'Post-op vitals stable, ready for ward transfer', time: '25 min ago', severity: 'info' },
-];
-
 const statusStyle: Record<string, string> = {
   completed: 'bg-emerald-500/10 text-emerald-600',
-  'in-progress': 'bg-blue-500/10 text-blue-600',
+  'in-consultation': 'bg-blue-500/10 text-blue-600',
+  'checked-in': 'bg-amber-500/10 text-amber-600',
   waiting: 'bg-amber-500/10 text-amber-600',
   scheduled: 'bg-muted text-muted-foreground',
+  confirmed: 'bg-muted text-muted-foreground',
 };
 
 const severityStyle: Record<string, string> = {
@@ -83,51 +45,274 @@ const severityStyle: Record<string, string> = {
   info: 'bg-blue-500/10 text-blue-600',
 };
 
+function parseDate(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDisplayTime(value: string) {
+  const normalized = value.trim().toUpperCase();
+  if (normalized.includes('AM') || normalized.includes('PM')) {
+    return normalized;
+  }
+
+  const [hourRaw, minuteRaw] = normalized.split(':');
+  const hour = Number(hourRaw || '0');
+  const minute = Number(minuteRaw || '0');
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = ((hour + 11) % 12) + 1;
+  return `${String(displayHour).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${ampm}`;
+}
+
 export default function DoctorDashboard() {
-  const { user } = useAuth();
+  const { nursingRounds } = useHospital();
+  const {
+    isDoctor,
+    doctorName,
+    department,
+    patients,
+    appointments,
+    queue,
+    labOrders,
+    radiologyOrders,
+    admissions,
+  } = useDoctorScope();
+
+  const latestRoundByAdmission = useMemo(() => {
+    const map = new Map<string, (typeof nursingRounds)[number]>();
+    nursingRounds.forEach((round) => {
+      if (!map.has(round.admissionId)) {
+        map.set(round.admissionId, round);
+      }
+    });
+    return map;
+  }, [nursingRounds]);
+
+  const opdQueueCount = queue.filter((entry) => {
+    return entry.status === 'waiting' || entry.status === 'called' || entry.status === 'in-consultation';
+  }).length;
+
+  const pendingLabCount = labOrders.filter((order) => order.stage !== 'Reported' && order.stage !== 'Validated').length;
+  const pendingRadiologyCount = radiologyOrders.filter((order) => order.status !== 'Reported').length;
+  const pendingReportsCount = pendingLabCount + pendingRadiologyCount;
+
+  const roundsDueCount = admissions.filter((admission) => {
+    const latest = latestRoundByAdmission.get(admission.id);
+    return (
+      admission.status === 'icu' ||
+      admission.nursingPriority === 'high' ||
+      !latest ||
+      latest.painScore >= 4
+    );
+  }).length;
+
+  const stats = [
+    {
+      label: 'Assigned Patients',
+      value: String(patients.length),
+      change: `${patients.filter((patient) => patient.patientType === 'IPD' || patient.patientType === 'ICU').length} inpatients`,
+      up: true,
+      icon: Users,
+    },
+    {
+      label: 'OPD Queue',
+      value: String(opdQueueCount),
+      change: `${queue.filter((entry) => entry.status === 'waiting').length} waiting`,
+      up: false,
+      icon: CalendarDays,
+    },
+    {
+      label: 'Pending Reports',
+      value: String(pendingReportsCount),
+      change: `${pendingLabCount} lab · ${pendingRadiologyCount} radiology`,
+      up: true,
+      icon: FlaskConical,
+    },
+    {
+      label: 'IPD Rounds Due',
+      value: String(roundsDueCount),
+      change: `${admissions.filter((admission) => admission.status === 'icu').length} ICU`,
+      up: false,
+      icon: Building2,
+    },
+  ];
+
+  const weeklyPatients = useMemo(() => {
+    const now = new Date();
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(now);
+      date.setDate(now.getDate() - (6 - index));
+      date.setHours(0, 0, 0, 0);
+      return date;
+    });
+
+    return days.map((day) => {
+      const dayKey = day.toDateString();
+      const opd = appointments.filter((appointment) => {
+        const date = parseDate(`${appointment.date}T00:00:00`);
+        return date?.toDateString() === dayKey;
+      }).length;
+      const ipd = admissions.filter((admission) => {
+        const date = parseDate(admission.admittedAt);
+        return date?.toDateString() === dayKey;
+      }).length;
+
+      return {
+        day: day.toLocaleDateString('en-IN', { weekday: 'short' }),
+        opd,
+        ipd,
+      };
+    });
+  }, [admissions, appointments]);
+
+  const consultationTrend = useMemo(() => {
+    const buckets = Array.from({ length: 9 }, (_, offset) => {
+      const hour = 9 + offset;
+      return {
+        hour: `${hour}:00`,
+        count: 0,
+      };
+    });
+
+    appointments.forEach((appointment) => {
+      const hour = Number(appointment.time.split(':')[0]);
+      const bucket = buckets.find((item) => Number(item.hour.split(':')[0]) === hour);
+      if (bucket) {
+        bucket.count += 1;
+      }
+    });
+
+    return buckets;
+  }, [appointments]);
+
+  const todayIso = new Date().toISOString().split('T')[0];
+  const todayAppointments = useMemo(() => {
+    const todays = appointments
+      .filter((appointment) => appointment.date === todayIso)
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    if (todays.length > 0) {
+      return todays;
+    }
+
+    return [...appointments]
+      .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+      .slice(0, 8);
+  }, [appointments, todayIso]);
+
+  const pendingLabs = useMemo(() => {
+    return labOrders
+      .filter((order) => order.stage !== 'Reported' && order.stage !== 'Validated')
+      .slice(0, 5)
+      .map((order) => ({
+        patient: order.patientName,
+        test: order.tests,
+        ordered: order.orderTime,
+        priority: order.priority.toLowerCase(),
+      }));
+  }, [labOrders]);
+
+  const criticalAlerts = useMemo(() => {
+    const alerts: Array<{ patient: string; message: string; time: string; severity: 'critical' | 'warning' | 'info' }> = [];
+
+    admissions.forEach((admission) => {
+      if (admission.status === 'icu') {
+        alerts.push({
+          patient: `${admission.bed} · ${admission.patientName}`,
+          message: 'ICU admission requires high-frequency doctor review.',
+          time: admission.nextDoctorRoundAt || 'Now',
+          severity: 'critical',
+        });
+      } else if (admission.nursingPriority === 'high') {
+        alerts.push({
+          patient: `${admission.bed} · ${admission.patientName}`,
+          message: 'High-priority nursing flag raised for inpatient monitoring.',
+          time: admission.nextDoctorRoundAt || 'Today',
+          severity: 'warning',
+        });
+      }
+    });
+
+    labOrders.forEach((order) => {
+      if (order.criticalAlert) {
+        alerts.push({
+          patient: order.patientName,
+          message: `Critical lab alert for ${order.tests}.`,
+          time: order.orderTime,
+          severity: 'critical',
+        });
+      }
+    });
+
+    radiologyOrders.forEach((order) => {
+      if (order.critical) {
+        alerts.push({
+          patient: order.patientName,
+          message: `Critical imaging flagged for ${order.study}.`,
+          time: order.orderTime,
+          severity: 'warning',
+        });
+      }
+    });
+
+    if (alerts.length === 0) {
+      alerts.push({
+        patient: department || 'Department',
+        message: 'No critical alerts. Continue regular rounds and queue flow.',
+        time: 'Now',
+        severity: 'info',
+      });
+    }
+
+    return alerts.slice(0, 4);
+  }, [admissions, department, labOrders, radiologyOrders]);
+
+  if (!isDoctor) {
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Access denied. Only doctor users can access the doctor dashboard.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <motion.div {...fadeIn(0)}>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Good Morning, {user?.name ?? 'Doctor'}
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Good Morning, {doctorName}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} — You have <span className="font-semibold text-foreground">8 appointments</span> today
+          {new Date().toLocaleDateString('en-IN', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })} · {department || 'All Departments'}
         </p>
       </motion.div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s, i) => (
-          <motion.div key={s.label} {...fadeIn(i + 1)} className="border rounded-xl p-5 bg-card hover:shadow-md transition-shadow">
+        {stats.map((stat, index) => (
+          <motion.div key={stat.label} {...fadeIn(index + 1)} className="border rounded-xl p-5 bg-card hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                <s.icon className="w-4 h-4 text-muted-foreground" />
+                <stat.icon className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className={`flex items-center gap-0.5 text-xs font-semibold ${s.up ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {s.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {s.change}
+              <span className={`flex items-center gap-0.5 text-xs font-semibold ${stat.up ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold tracking-tight">{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+            <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <motion.div {...fadeIn(5)} className="lg:col-span-2 border rounded-xl bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-semibold text-sm">Patient Volume</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">This week OPD vs IPD</p>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-foreground" /> OPD</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted-foreground/50" /> IPD</span>
+              <p className="text-xs text-muted-foreground mt-0.5">Last 7 days OPD vs IPD</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
@@ -143,8 +328,8 @@ export default function DoctorDashboard() {
         </motion.div>
 
         <motion.div {...fadeIn(6)} className="border rounded-xl bg-card p-5">
-          <h2 className="font-semibold text-sm mb-1">Today's Consultation Flow</h2>
-          <p className="text-xs text-muted-foreground mb-4">Patients seen by hour</p>
+          <h2 className="font-semibold text-sm mb-1">Consultation Flow</h2>
+          <p className="text-xs text-muted-foreground mb-4">Today by hour</p>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={consultationTrend}>
               <defs>
@@ -163,51 +348,50 @@ export default function DoctorDashboard() {
         </motion.div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Today's Appointments */}
         <motion.div {...fadeIn(7)} className="lg:col-span-2 border rounded-xl bg-card overflow-hidden">
           <div className="p-4 border-b flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-sm">Today's Appointments</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{todayAppointments.length} scheduled</p>
+              <h2 className="font-semibold text-sm">Appointments</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{todayAppointments.length} slot(s) in focus</p>
             </div>
             <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5">
               View all <ChevronRight className="w-3 h-3" />
             </button>
           </div>
           <div className="divide-y">
-            {todayAppointments.map((apt) => (
-              <div key={apt.time + apt.patient} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors">
-                <span className="text-xs font-mono font-medium text-muted-foreground w-16 shrink-0">{apt.time}</span>
+            {todayAppointments.map((appointment) => (
+              <div key={appointment.id} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors">
+                <span className="text-xs font-mono font-medium text-muted-foreground w-16 shrink-0">{formatDisplayTime(appointment.time)}</span>
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold">{apt.patient.split(' ').map(n => n[0]).join('')}</span>
+                  <span className="text-xs font-semibold">{appointment.patientName.split(' ').map((part) => part[0]).join('')}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{apt.patient}</p>
-                  <p className="text-[11px] text-muted-foreground">{apt.age}y · {apt.type}</p>
+                  <p className="text-sm font-medium truncate">{appointment.patientName}</p>
+                  <p className="text-[11px] text-muted-foreground">{appointment.type} · {appointment.department}</p>
                 </div>
-                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyle[apt.status]}`}>
-                  {apt.status.replace('-', ' ')}
+                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyle[appointment.status] || statusStyle.scheduled}`}>
+                  {appointment.status}
                 </span>
               </div>
             ))}
+            {todayAppointments.length === 0 && (
+              <div className="py-12 text-center text-sm text-muted-foreground">No appointments in scope yet.</div>
+            )}
           </div>
         </motion.div>
 
-        {/* Right Column: Alerts + Pending Labs */}
         <div className="space-y-4">
-          {/* Critical Alerts */}
           <motion.div {...fadeIn(8)} className="border rounded-xl bg-card overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-                Critical Alerts
+                Clinical Alerts
               </h2>
             </div>
             <div className="divide-y">
-              {criticalAlerts.map((alert, i) => (
-                <div key={i} className="px-4 py-3 hover:bg-accent/50 transition-colors">
+              {criticalAlerts.map((alert, index) => (
+                <div key={`${alert.patient}-${index}`} className="px-4 py-3 hover:bg-accent/50 transition-colors">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${severityStyle[alert.severity]}`}>
                       {alert.severity}
@@ -221,30 +405,32 @@ export default function DoctorDashboard() {
             </div>
           </motion.div>
 
-          {/* Pending Labs */}
           <motion.div {...fadeIn(9)} className="border rounded-xl bg-card overflow-hidden">
             <div className="p-4 border-b flex items-center justify-between">
               <h2 className="font-semibold text-sm flex items-center gap-1.5">
                 <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
-                Pending Lab Reports
+                Pending Labs
               </h2>
               <span className="text-[11px] font-medium bg-muted px-2 py-0.5 rounded-full">{pendingLabs.length}</span>
             </div>
             <div className="divide-y">
-              {pendingLabs.map((lab, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/50 transition-colors">
+              {pendingLabs.map((lab, index) => (
+                <div key={`${lab.patient}-${index}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/50 transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{lab.patient}</p>
                     <p className="text-[11px] text-muted-foreground">{lab.test}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`text-[10px] font-semibold uppercase ${lab.priority === 'urgent' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] font-semibold uppercase ${lab.priority === 'urgent' || lab.priority === 'emergency' ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {lab.priority}
                     </span>
                     <p className="text-[10px] text-muted-foreground">{lab.ordered}</p>
                   </div>
                 </div>
               ))}
+              {pendingLabs.length === 0 && (
+                <div className="py-6 text-center text-xs text-muted-foreground">No pending labs.</div>
+              )}
             </div>
           </motion.div>
         </div>

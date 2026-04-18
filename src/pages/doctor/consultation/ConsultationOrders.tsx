@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, FlaskConical, Scan, Syringe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface LabTest { id: string; text: string; priority: 'routine' | 'urgent' | 'stat'; }
 interface RadiologyOrder { id: string; type: string; bodyPart: string; indication: string; priority: 'routine' | 'urgent'; }
@@ -70,11 +71,16 @@ export default function ConsultationOrders({ labTests, onLabChange, radiologyOrd
         </div>
         <div className="flex gap-1.5">
           <Input placeholder="Add test..." value={newLab} onChange={e => setNewLab(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLab()} className="h-7 text-xs flex-1" />
-          <select value={labPriority} onChange={e => setLabPriority(e.target.value as any)} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-            <option value="routine">Routine</option>
-            <option value="urgent">Urgent</option>
-            <option value="stat">STAT</option>
-          </select>
+          <Select value={labPriority} onValueChange={(value) => setLabPriority(value as 'routine' | 'urgent' | 'stat')}>
+            <SelectTrigger className="h-7 text-xs w-[110px]">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="routine">Routine</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
+              <SelectItem value="stat">STAT</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -92,9 +98,16 @@ export default function ConsultationOrders({ labTests, onLabChange, radiologyOrd
           ))}
         </div>
         <div className="flex gap-1.5">
-          <select value={newRad.type} onChange={e => setNewRad({ ...newRad, type: e.target.value })} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-            {IMAGING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <Select value={newRad.type} onValueChange={(value) => setNewRad({ ...newRad, type: value })}>
+            <SelectTrigger className="h-7 text-xs w-[140px]">
+              <SelectValue placeholder="Modality" />
+            </SelectTrigger>
+            <SelectContent>
+              {IMAGING_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input placeholder="Body part" value={newRad.bodyPart} onChange={e => setNewRad({ ...newRad, bodyPart: e.target.value })} className="h-7 text-xs flex-1" />
           <Input placeholder="Indication" value={newRad.indication} onChange={e => setNewRad({ ...newRad, indication: e.target.value })} className="h-7 text-xs flex-1" />
           <button onClick={addRadiology} className="h-7 px-2 text-xs font-medium bg-foreground text-background rounded-md">Add</button>

@@ -123,19 +123,22 @@ export default function DashboardPage() {
           <motion.div
             key={stat.label}
             {...fadeIn(i + 1)}
-            className="border rounded-xl p-5 bg-card hover:shadow-md transition-shadow"
+            className="group relative overflow-hidden rounded-md border border-border/40 bg-background p-5 transition-all duration-300 hover:bg-muted/30"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                <stat.icon className="w-4 h-4 text-muted-foreground" />
+            {/* Subtle glow on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            
+            <div className="relative z-10 flex items-center justify-between mb-4">
+              <div className="w-8 h-8 rounded-sm bg-muted/50 flex items-center justify-center border border-border/40 group-hover:border-foreground/20 transition-colors">
+                <stat.icon className="w-4 h-4 text-foreground/70" />
               </div>
-              <span className={`flex items-center gap-0.5 text-xs font-semibold ${stat.up ? 'text-emerald-600' : 'text-muted-foreground'}`}>
-                {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+              <span className={`flex items-center gap-0.5 text-[10px] font-bold tracking-widest uppercase ${stat.up ? 'text-success' : 'text-muted-foreground'}`}>
+                {stat.up ? <ArrowUpRight className="w-3 h-3" strokeWidth={3} /> : <ArrowDownRight className="w-3 h-3" strokeWidth={3} />}
                 {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+            <p className="relative z-10 text-3xl font-black tracking-tighter text-foreground">{stat.value}</p>
+            <p className="relative z-10 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</p>
           </motion.div>
         ))}
       </div>
@@ -143,66 +146,75 @@ export default function DashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Chart */}
-        <motion.div {...fadeIn(5)} className="lg:col-span-2 border rounded-xl bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <motion.div {...fadeIn(5)} className="lg:col-span-2 border border-border/40 rounded-md bg-background p-5 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-t from-muted/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100 pointer-events-none" />
+          <div className="relative z-10 flex items-center justify-between mb-6">
             <div>
-              <h2 className="font-semibold text-sm">Revenue Overview</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Last 7 days performance</p>
+              <h2 className="font-bold tracking-tight text-sm uppercase">Revenue Overview</h2>
+              <p className="text-[11px] font-medium tracking-wide text-muted-foreground mt-0.5">Last 7 days performance</p>
             </div>
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-foreground" /> OPD</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted-foreground/50" /> IPD</span>
+            <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-foreground shadow-[0_0_4px_hsl(var(--foreground))]" /> OPD</span>
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" /> IPD</span>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={revenueData}>
-              <defs>
-                <linearGradient id="gradOPD" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(0,0%,15%)" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="hsl(0,0%,15%)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(0,0%,70%)" />
-              <YAxis tick={{ fontSize: 11 }} stroke="hsl(0,0%,70%)" tickFormatter={v => `₹${v/1000}K`} />
-              <Tooltip
-                contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(0,0%,90%)' }}
-                formatter={(value: number) => [`₹${(value/1000).toFixed(1)}K`, '']}
-              />
-              <Area type="monotone" dataKey="opd" stroke="hsl(0,0%,15%)" fill="url(#gradOPD)" strokeWidth={2} />
-              <Area type="monotone" dataKey="ipd" stroke="hsl(0,0%,55%)" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="relative z-10">
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={revenueData}>
+                <defs>
+                  <linearGradient id="gradOPD" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }} stroke="transparent" dy={10} />
+                <YAxis tick={{ fontSize: 10, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }} stroke="transparent" dx={-10} tickFormatter={v => `₹${v/1000}K`} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 4, fontSize: 11, fontWeight: 'bold', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                  formatter={(value: number) => [`₹${(value/1000).toFixed(1)}K`, '']}
+                />
+                <Area type="monotone" dataKey="opd" stroke="hsl(var(--foreground))" fill="url(#gradOPD)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(var(--foreground))" }} />
+                <Area type="monotone" dataKey="ipd" stroke="hsl(var(--muted-foreground))" fill="transparent" strokeWidth={1.5} strokeDasharray="3 3" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </motion.div>
 
         {/* Department Distribution */}
-        <motion.div {...fadeIn(6)} className="border rounded-xl bg-card p-5">
-          <h2 className="font-semibold text-sm mb-1">Department Load</h2>
-          <p className="text-xs text-muted-foreground mb-4">Patient distribution today</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie
-                data={departmentData}
-                innerRadius={50}
-                outerRadius={75}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {departmentData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => [`${value}%`, '']} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2">
+        <motion.div {...fadeIn(6)} className="border border-border/40 rounded-md bg-background p-5 relative overflow-hidden group">
+          <h2 className="font-bold tracking-tight text-sm uppercase mb-0.5 relative z-10">Department Load</h2>
+          <p className="text-[11px] font-medium tracking-wide text-muted-foreground mb-6 relative z-10">Patient distribution today</p>
+          <div className="relative z-10">
+            <ResponsiveContainer width="100%" height={160}>
+              <PieChart>
+                <Pie
+                  data={departmentData}
+                  innerRadius={55}
+                  outerRadius={75}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="transparent"
+                >
+                  {departmentData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i]} className="hover:opacity-80 transition-opacity duration-300" />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: 4, fontSize: 11, fontWeight: 'bold', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}
+                  formatter={(value: number) => [`${value}%`, '']} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-4 relative z-10">
             {departmentData.map((d, i) => (
-              <div key={d.name} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} />
+              <div key={d.name} className="flex items-center justify-between text-[11px] font-semibold tracking-wide text-muted-foreground group/item hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full transition-transform group-hover/item:scale-150" style={{ backgroundColor: COLORS[i] }} />
                   {d.name}
                 </span>
-                <span className="font-medium">{d.value}%</span>
+                <span className="font-bold text-foreground">{d.value}%</span>
               </div>
             ))}
           </div>
@@ -212,59 +224,66 @@ export default function DashboardPage() {
       {/* Bottom Row: Queue + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* OPD Queue */}
-        <motion.div {...fadeIn(7)} className="border rounded-xl bg-card overflow-hidden">
-          <div className="p-4 border-b flex items-center justify-between">
+        <motion.div {...fadeIn(7)} className="border border-border/40 rounded-md bg-background overflow-hidden relative">
+           <div className="absolute inset-0 opacity-[0.015] mix-blend-difference pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }} />
+          <div className="relative z-10 p-5 border-b border-border/40 flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-sm">Live OPD Queue</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">5 patients in queue</p>
+              <h2 className="font-bold tracking-tight text-sm uppercase">Live OPD Queue</h2>
+              <p className="text-[11px] font-medium text-muted-foreground tracking-wide mt-0.5">5 patients in queue</p>
             </div>
-            <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground transition-colors">
               View all →
             </button>
           </div>
-          <div className="divide-y">
+          <div className="relative z-10 divide-y divide-border/40">
             {opdQueue.map((item) => (
-              <div key={item.token} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors">
-                <span className="text-xs font-mono font-semibold bg-muted px-2 py-1 rounded">{item.token}</span>
+              <div key={item.token} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors">
+                <span className="text-[10px] font-mono font-bold tracking-wider bg-foreground text-background px-2 py-1 rounded-sm">{item.token}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.patient}</p>
-                  <p className="text-[11px] text-muted-foreground">{item.doctor} · {item.dept}</p>
+                  <p className="text-[13px] font-bold tracking-tight truncate">{item.patient}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">{item.doctor} <span className="text-border mx-1">•</span> {item.dept}</p>
                 </div>
-                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  item.status === 'In Consultation' ? 'bg-emerald-500/10 text-emerald-600'
-                  : item.status === 'Checked In' ? 'bg-blue-500/10 text-blue-600'
-                  : 'bg-muted text-muted-foreground'
+                <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm border ${
+                  item.status === 'In Consultation' ? 'bg-success/5 border-success/20 text-success'
+                  : item.status === 'Checked In' ? 'bg-info/5 border-info/20 text-info'
+                  : 'bg-transparent border-border/40 text-muted-foreground'
                 }`}>
                   {item.status}
                 </span>
-                <span className="text-[11px] text-muted-foreground">{item.time}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase">{item.time}</span>
               </div>
             ))}
           </div>
         </motion.div>
 
         {/* Recent Activity */}
-        <motion.div {...fadeIn(8)} className="border rounded-xl bg-card overflow-hidden">
-          <div className="p-4 border-b flex items-center justify-between">
+        <motion.div {...fadeIn(8)} className="border border-border/40 rounded-md bg-background overflow-hidden relative">
+          <div className="absolute inset-0 opacity-[0.015] mix-blend-difference pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }} />
+          <div className="relative z-10 p-5 border-b border-border/40 flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-sm">Recent Activity</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">System-wide updates</p>
+              <h2 className="font-bold tracking-tight text-sm uppercase">Recent Activity</h2>
+              <p className="text-[11px] font-medium text-muted-foreground tracking-wide mt-0.5">System-wide updates</p>
             </div>
-            <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground transition-colors">
               View all →
             </button>
           </div>
-          <div className="divide-y">
+          <div className="relative z-10 divide-y divide-border/40">
             {recentActivity.map((item, i) => {
               const Icon = typeIcons[item.type];
               return (
-                <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${typeStyles[item.type]}`}>
-                    <Icon className="w-3 h-3" />
+                <div key={i} className="flex items-start gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors group">
+                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-110 ${
+                    item.type === 'alert' ? 'bg-destructive/5 text-destructive border-destructive/20'
+                    : item.type === 'success' ? 'bg-success/5 text-success border-success/20'
+                    : item.type === 'info' ? 'bg-info/5 text-info border-info/20'
+                    : 'bg-warning/5 text-warning border-warning/20'
+                  }`}>
+                    <Icon className="w-4 h-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-snug">{item.text}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{item.time}</p>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p className="text-[13px] font-bold tracking-tight leading-snug truncate">{item.text}</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">{item.time}</p>
                   </div>
                 </div>
               );

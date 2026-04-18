@@ -27,19 +27,19 @@ const PENDING_VALIDATION: ValidationItem[] = [
     category: "Biochemistry", enteredBy: "Tech. Amit", enteredAt: "10:30 AM", priority: "Routine",
     tests: [
       { name: "Total Cholesterol", value: "242", unit: "mg/dL", ref: "<200", flag: "High" },
-      { name: "HDL", value: "38", unit: "mg/dL", ref: ">40", flag: "Low" },
-      { name: "LDL", value: "168", unit: "mg/dL", ref: "<100", flag: "High" },
+      { name: "HDL Cholesterol", value: "38", unit: "mg/dL", ref: ">40", flag: "Low" },
+      { name: "LDL Cholesterol", value: "168", unit: "mg/dL", ref: "<100", flag: "High" },
       { name: "Triglycerides", value: "180", unit: "mg/dL", ref: "<150", flag: "High" },
-      { name: "HbA1c", value: "5.4", unit: "%", ref: "4.0–5.6", flag: "" },
     ],
   },
   {
-    orderId: "LO-4512", sampleId: "S-20250308-008", uhid: "UH-2024-0160", patient: "Ravi Shankar",
-    category: "Serology", enteredBy: "Tech. Neha", enteredAt: "10:00 AM", priority: "Urgent",
+    orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma",
+    category: "Hematology", enteredBy: "Tech. Neha", enteredAt: "11:15 AM", priority: "Routine",
     tests: [
-      { name: "HIV I & II", value: "Non-Reactive", unit: "", ref: "Non-Reactive", flag: "" },
-      { name: "HBsAg", value: "Non-Reactive", unit: "", ref: "Non-Reactive", flag: "" },
-      { name: "HCV", value: "Reactive", unit: "", ref: "Non-Reactive", flag: "Critical" },
+      { name: "Hemoglobin", value: "10.5", unit: "g/dL", ref: "12.0–15.5", flag: "Low" },
+      { name: "WBC Count", value: "12.2", unit: "×10³/μL", ref: "4.0–11.0", flag: "High" },
+      { name: "Platelet Count", value: "140", unit: "×10³/μL", ref: "150–400", flag: "Low" },
+      { name: "RBC Count", value: "3.9", unit: "mill/μL", ref: "4.0–5.5", flag: "Low" },
     ],
   },
 ];

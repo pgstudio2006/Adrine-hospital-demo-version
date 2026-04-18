@@ -26,16 +26,32 @@ interface TestResult {
 }
 
 const TEST_RESULTS: TestResult[] = [
+  // Hematology - CBC
   { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "Hemoglobin", category: "Hematology", resultValue: "", unit: "g/dL", refRange: "12.0–15.5", flag: "", status: "Pending" },
   { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "WBC Count", category: "Hematology", resultValue: "", unit: "×10³/μL", refRange: "4.0–11.0", flag: "", status: "Pending" },
   { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "Platelet Count", category: "Hematology", resultValue: "", unit: "×10³/μL", refRange: "150–400", flag: "", status: "Pending" },
-  { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "CRP", category: "Hematology", resultValue: "", unit: "mg/L", refRange: "0–6", flag: "", status: "Pending" },
-  { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "ESR", category: "Hematology", resultValue: "", unit: "mm/hr", refRange: "0–20", flag: "", status: "Pending" },
+  { orderId: "LO-4521", sampleId: "S-20250308-001", uhid: "UH-2024-0045", patient: "Anita Sharma", testName: "RBC Count", category: "Hematology", resultValue: "", unit: "mill/μL", refRange: "4.0–5.5", flag: "", status: "Pending" },
+  
+  // Bio Chemistry - Lipid Profile
   { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "Total Cholesterol", category: "Biochemistry", resultValue: "242", unit: "mg/dL", refRange: "<200", flag: "High", status: "Entered" },
-  { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "HDL", category: "Biochemistry", resultValue: "38", unit: "mg/dL", refRange: ">40", flag: "Low", status: "Entered" },
-  { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "LDL", category: "Biochemistry", resultValue: "168", unit: "mg/dL", refRange: "<100", flag: "High", status: "Entered" },
+  { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "HDL Cholesterol", category: "Biochemistry", resultValue: "38", unit: "mg/dL", refRange: ">40", flag: "Low", status: "Entered" },
+  { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "LDL Cholesterol", category: "Biochemistry", resultValue: "168", unit: "mg/dL", refRange: "<100", flag: "High", status: "Entered" },
   { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "Triglycerides", category: "Biochemistry", resultValue: "180", unit: "mg/dL", refRange: "<150", flag: "High", status: "Entered" },
-  { orderId: "LO-4514", sampleId: "S-20250308-007", uhid: "UH-2024-0155", patient: "Kiran Desai", testName: "HbA1c", category: "Biochemistry", resultValue: "5.4", unit: "%", refRange: "4.0–5.6", flag: "", status: "Entered" },
+
+  // Bio Chemistry - Renal Function Test (RFT)
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "Blood Urea", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "15–40", flag: "", status: "Pending" },
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "Serum Creatinine", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "0.6–1.2", flag: "", status: "Pending" },
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "Uric Acid", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "3.5–7.2", flag: "", status: "Pending" },
+  
+  // Bio Chemistry - Liver Function Test (LFT)
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "Total Bilirubin", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "0.2–1.2", flag: "", status: "Pending" },
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "SGOT (AST)", category: "Biochemistry", resultValue: "", unit: "U/L", refRange: "5–40", flag: "", status: "Pending" },
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "SGPT (ALT)", category: "Biochemistry", resultValue: "", unit: "U/L", refRange: "7–56", flag: "", status: "Pending" },
+  { orderId: "LO-4580", sampleId: "S-20250309-012", uhid: "UH-2024-0230", patient: "Rahul Verma", testName: "Alkaline Phosphatase", category: "Biochemistry", resultValue: "", unit: "IU/L", refRange: "44–147", flag: "", status: "Pending" },
+  
+  // Bio Chemistry - Glucose
+  { orderId: "LO-4591", sampleId: "S-20250309-045", uhid: "UH-2024-0801", patient: "Meera Patel", testName: "Fasting Blood Sugar (FBS)", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "70–100", flag: "", status: "Pending" },
+  { orderId: "LO-4591", sampleId: "S-20250309-046", uhid: "UH-2024-0801", patient: "Meera Patel", testName: "Post Prandial (PPBS)", category: "Biochemistry", resultValue: "", unit: "mg/dL", refRange: "<140", flag: "", status: "Pending" },
 ];
 
 const flagColor = (f: string) => {

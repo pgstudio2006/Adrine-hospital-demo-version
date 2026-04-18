@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Complaint {
   id: string;
@@ -55,11 +56,16 @@ export default function ConsultationComplaints({ complaints, onChange, hpiNotes,
         <div className="flex gap-1.5">
           <Input placeholder="Complaint..." value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} className="h-7 text-xs flex-1" />
           <Input placeholder="Duration" value={newDuration} onChange={e => setNewDuration(e.target.value)} className="h-7 text-xs w-20" />
-          <select value={newSeverity} onChange={e => setNewSeverity(e.target.value as any)} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-            <option value="mild">Mild</option>
-            <option value="moderate">Moderate</option>
-            <option value="severe">Severe</option>
-          </select>
+          <Select value={newSeverity} onValueChange={(value) => setNewSeverity(value as 'mild' | 'moderate' | 'severe')}>
+            <SelectTrigger className="h-7 text-xs w-[110px]">
+              <SelectValue placeholder="Severity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mild">Mild</SelectItem>
+              <SelectItem value="moderate">Moderate</SelectItem>
+              <SelectItem value="severe">Severe</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

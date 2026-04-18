@@ -12,7 +12,8 @@ export type UserRole =
   | 'emergency'
   | 'hr_manager'
   | 'scheduler'
-  | 'dialysis_tech';
+  | 'dialysis_tech'
+  | 'crm_manager';
 
 export interface User {
   id: string;
@@ -37,6 +38,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   hr_manager: 'HR & Staff',
   scheduler: 'Scheduling',
   dialysis_tech: 'Dialysis Unit',
+  crm_manager: 'CRM & Patient Relations',
 };
 
 export type ModuleKey =
@@ -56,14 +58,15 @@ export type ModuleKey =
   | 'ot_management'
   | 'inventory'
   | 'reports'
-  | 'settings';
+  | 'settings'
+  | 'crm';
 
 // Which roles can access which modules
 export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   admin: [
     'dashboard', 'patients', 'appointments', 'opd', 'ipd', 'bed_management',
     'nursing', 'laboratory', 'radiology', 'pharmacy', 'billing', 'revenue',
-    'insurance', 'ot_management', 'inventory', 'reports', 'settings',
+    'insurance', 'ot_management', 'inventory', 'reports', 'settings', 'crm',
   ],
   doctor: [
     'dashboard', 'patients', 'appointments', 'opd', 'ipd', 'bed_management',
@@ -104,6 +107,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, ModuleKey[]> = {
   ],
   dialysis_tech: [
     'dashboard', 'patients', 'billing', 'inventory', 'reports',
+  ],
+  crm_manager: [
+    'dashboard', 'patients', 'appointments', 'crm', 'reports',
   ],
 };
 

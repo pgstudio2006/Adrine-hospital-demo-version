@@ -20,7 +20,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function PharmacyPrescriptions() {
-  const { prescriptions, dispensePrescription } = useHospital();
+  const { prescriptions, updatePrescriptionStatus, dispensePrescription } = useHospital();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<PrescriptionOrder | null>(null);
@@ -110,7 +110,12 @@ export default function PharmacyPrescriptions() {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => setSelected(rx)}><Eye className="h-4 w-4" /></Button>
-                      {(rx.status === "Pending" || rx.status === "Verified" || rx.status === "Partially dispensed") && (
+                      {rx.status === "Pending" && (
+                        <Button variant="ghost" size="icon" onClick={() => updatePrescriptionStatus(rx.id, "Verified")} title="Verify prescription">
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {(rx.status === "Verified" || rx.status === "Partially dispensed") && (
                         <Button variant="ghost" size="icon" onClick={() => openDispense(rx)}><Pill className="h-4 w-4" /></Button>
                       )}
                     </div>

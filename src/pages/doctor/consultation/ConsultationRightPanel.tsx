@@ -1,11 +1,24 @@
 import { useState } from 'react';
 import {
   FileText, Lock, Eye, EyeOff, Calendar, Sparkles,
-  BedDouble, UserPlus, Award, BookOpen, ArrowRightLeft, FileSearch
+  BedDouble, Award, BookOpen, ArrowRightLeft, FileSearch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type AdmissionBedType = 'General' | 'Semi-Private' | 'Private' | 'ICU';
+type AdmissionPriority = 'Routine' | 'Urgent' | 'Emergency';
+type AdmissionJourneyType = 'IPD' | 'ICU' | 'Surgery' | 'Maternity' | 'Dialysis' | 'Trauma';
+
+export interface AdmissionRecommendationPayload {
+  department: string;
+  bedType: AdmissionBedType;
+  priority: AdmissionPriority;
+  reason: string;
+  journeyType: AdmissionJourneyType;
+}
 
 interface Props {
   advice: string;
@@ -21,21 +34,37 @@ interface Props {
   onSave: () => void;
   onDraft: () => void;
   onPreview?: () => void;
+  onRecommendAdmission?: (payload: AdmissionRecommendationPayload) => void;
 }
 
 export default function ConsultationRightPanel({
   advice, onAdviceChange, privateNotes, onPrivateNotesChange,
   followUpDays, onFollowUpDaysChange, followUpUnit, onFollowUpUnitChange,
-  treatmentPlan, onTreatmentPlanChange, onSave, onDraft, onPreview,
+  treatmentPlan, onTreatmentPlanChange, onSave, onDraft, onPreview, onRecommendAdmission,
 }: Props) {
   const [showPrivateNotes, setShowPrivateNotes] = useState(false);
   const [showAdmission, setShowAdmission] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
 
-  const [admissionData, setAdmissionData] = useState({ department: '', bedType: 'General', priority: 'Routine', reason: '' });
+  const [admissionData, setAdmissionData] = useState<AdmissionRecommendationPayload>({
+    department: '',
+    bedType: 'General',
+    priority: 'Routine',
+    reason: '',
+    journeyType: 'IPD',
+  });
   const [referralData, setReferralData] = useState({ doctor: '', department: '', reason: '' });
   const [certificateType, setCertificateType] = useState('medical-leave');
+
+  const handleSubmitAdmission = () => {
+    if (!admissionData.reason.trim()) {
+      return;
+    }
+
+    onRecommendAdmission?.(admissionData);
+    setShowAdmission(false);
+  };
 
   return (
     <div className="space-y-3">
@@ -94,11 +123,16 @@ export default function ConsultationRightPanel({
         </p>
         <div className="flex gap-2">
           <Input value={followUpDays} onChange={e => onFollowUpDaysChange(e.target.value)} className="h-7 text-xs w-14" />
-          <select value={followUpUnit} onChange={e => onFollowUpUnitChange(e.target.value)} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-            <option>Days</option>
-            <option>Weeks</option>
-            <option>Months</option>
-          </select>
+          <Select value={followUpUnit} onValueChange={onFollowUpUnitChange}>
+            <SelectTrigger className="h-7 text-xs w-[110px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Days">Days</SelectItem>
+              <SelectItem value="Weeks">Weeks</SelectItem>
+              <SelectItem value="Months">Months</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -110,17 +144,52 @@ export default function ConsultationRightPanel({
         </button>
         {showAdmission && (
           <div className="border rounded-lg p-3 space-y-2 bg-accent/30">
+            <Select value={admissionData.journeyType} onValueChange={(value) => setAdmissionData({ ...admissionData, journeyType: value as AdmissionJourneyType })}>
+              <SelectTrigger className="h-7 text-xs">
+                <SelectValue placeholder="Admission Journey" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="IPD">IPD</SelectItem>
+                <SelectItem value="ICU">ICU</SelectItem>
+                <SelectItem value="Surgery">Surgery</SelectItem>
+                <SelectItem value="Maternity">Maternity</SelectItem>
+                <SelectItem value="Dialysis">Dialysis</SelectItem>
+                <SelectItem value="Trauma">Trauma</SelectItem>
+              </SelectContent>
+            </Select>
             <Input placeholder="Department" value={admissionData.department} onChange={e => setAdmissionData({ ...admissionData, department: e.target.value })} className="h-7 text-xs" />
             <div className="flex gap-1.5">
-              <select value={admissionData.bedType} onChange={e => setAdmissionData({ ...admissionData, bedType: e.target.value })} className="h-7 text-xs border rounded-md px-1.5 bg-background flex-1">
-                <option>General</option><option>Semi-Private</option><option>Private</option><option>ICU</option>
-              </select>
-              <select value={admissionData.priority} onChange={e => setAdmissionData({ ...admissionData, priority: e.target.value })} className="h-7 text-xs border rounded-md px-1.5 bg-background flex-1">
-                <option>Routine</option><option>Urgent</option><option>Emergency</option>
-              </select>
+              <Select value={admissionData.bedType} onValueChange={(value) => setAdmissionData({ ...admissionData, bedType: value as AdmissionBedType })}>
+                <SelectTrigger className="h-7 text-xs flex-1">
+                  <SelectValue placeholder="Bed Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Semi-Private">Semi-Private</SelectItem>
+                  <SelectItem value="Private">Private</SelectItem>
+                  <SelectItem value="ICU">ICU</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={admissionData.priority} onValueChange={(value) => setAdmissionData({ ...admissionData, priority: value as AdmissionPriority })}>
+                <SelectTrigger className="h-7 text-xs flex-1">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Routine">Routine</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                  <SelectItem value="Emergency">Emergency</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Input placeholder="Reason" value={admissionData.reason} onChange={e => setAdmissionData({ ...admissionData, reason: e.target.value })} className="h-7 text-xs" />
-            <Button size="sm" className="h-7 text-xs w-full">Submit Admission Request</Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs w-full"
+              onClick={handleSubmitAdmission}
+              disabled={!admissionData.reason.trim() || !onRecommendAdmission}
+            >
+              Transfer OPD To IPD
+            </Button>
           </div>
         )}
 
@@ -143,12 +212,17 @@ export default function ConsultationRightPanel({
         </button>
         {showCertificate && (
           <div className="border rounded-lg p-3 space-y-2 bg-accent/30">
-            <select value={certificateType} onChange={e => setCertificateType(e.target.value)} className="h-7 text-xs border rounded-md px-1.5 bg-background w-full">
-              <option value="medical-leave">Medical Leave Certificate</option>
-              <option value="fitness">Fitness Certificate</option>
-              <option value="illness">Illness Certificate</option>
-              <option value="fitness-to-work">Fitness to Work</option>
-            </select>
+            <Select value={certificateType} onValueChange={setCertificateType}>
+              <SelectTrigger className="h-7 text-xs w-full">
+                <SelectValue placeholder="Certificate Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="medical-leave">Medical Leave Certificate</SelectItem>
+                <SelectItem value="fitness">Fitness Certificate</SelectItem>
+                <SelectItem value="illness">Illness Certificate</SelectItem>
+                <SelectItem value="fitness-to-work">Fitness to Work</SelectItem>
+              </SelectContent>
+            </Select>
             <Button size="sm" className="h-7 text-xs w-full">Generate Certificate</Button>
           </div>
         )}

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Plus, Printer, Send, FileText } from "lucide-react";
+import { Search, Eye, Plus, Printer, Send, FileText, Trash2, Save, CreditCard } from "lucide-react";
 
 interface InvoiceItem {
   service: string;
@@ -103,12 +103,56 @@ export default function BillingInvoices() {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [selected, setSelected] = useState<Invoice | null>(null);
+  
+  // New Invoice State
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [newPatient, setNewPatient] = useState("");
+  const [newUhid, setNewUhid] = useState("");
+  const [newCategory, setNewCategory] = useState<"OPD" | "IPD" | "Emergency" | "Pharmacy" | "Lab" | "Radiology" | "Package">("OPD");
+  const [newItems, setNewItems] = useState<InvoiceItem[]>([
+    { service: "", dept: "", qty: 1, rate: 0, tax: 0, amount: 0 }
+  ]);
 
   const filtered = invoices.filter(inv => {
     const matchSearch = inv.patient.toLowerCase().includes(search.toLowerCase()) || inv.id.toLowerCase().includes(search.toLowerCase());
     const matchCat = catFilter === "all" || inv.category === catFilter;
     return matchSearch && matchCat;
   });
+
+  const handleAddItem = () => {
+    setNewItems([...newItems, { service: "", dept: "", qty: 1, rate: 0, tax: 0, amount: 0 }]);
+  };
+
+  const handleUpdateItem = (index: number, field: keyof InvoiceItem, value: any) => {
+    const updated = [...newItems];
+    updated[index] = { ...updated[index], [field]: value };
+    // Recalculate amount
+    if (field === 'qty' || field === 'rate' || field === 'tax') {
+       const qty = Number(updated[index].qty) || 0;
+       const rate = Number(updated[index].rate) || 0;
+       const tax = Number(updated[index].tax) || 0;
+       const base = qty * rate;
+       updated[index].amount = base + (base * tax / 100);
+    }
+    setNewItems(updated);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setNewItems(newItems.filter((_, i) => i !== index));
+  };
+
+  const newSubtotal = newItems.reduce((acc, item) => acc + (item.qty * item.rate), 0);
+  const newTaxTotal = newItems.reduce((acc, item) => acc + ((item.qty * item.rate * item.tax) / 100), 0);
+  const newNetTotal = newSubtotal + newTaxTotal;
+
+  const handleSaveInvoice = () => {
+    // API logic would go here
+    setShowNewInvoice(false);
+    // Reset form
+    setNewPatient("");
+    setNewUhid("");
+    setNewItems([{ service: "", dept: "", qty: 1, rate: 0, tax: 0, amount: 0 }]);
+  };
 
   return (
     <div className="space-y-6">
@@ -117,7 +161,7 @@ export default function BillingInvoices() {
           <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
           <p className="text-muted-foreground text-sm">Generate, manage, and track patient invoices</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> New Invoice</Button>
+        <Button onClick={() => setShowNewInvoice(true)}><Plus className="h-4 w-4 mr-2" /> New Invoice</Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -243,6 +287,156 @@ export default function BillingInvoices() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Invoice Dialog */}
+      <Dialog open={showNewInvoice} onOpenChange={setShowNewInvoice}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Invoice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-4">
+            {/* Patient & Invoice Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-xl bg-muted/20">
+              <div className="space-y-2">
+                <Label>Patient Search (Name or UHID)</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search patient..." 
+                    className="pl-9" 
+                    value={newPatient} 
+                    onChange={e => {
+                      setNewPatient(e.target.value);
+                      if (!newUhid) setNewUhid("UH-" + Math.floor(10000 + Math.random() * 90000));
+                    }} 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>UHID</Label>
+                <Input placeholder="Auto-filled" value={newUhid} readOnly className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={newCategory} onValueChange={(v: any) => setNewCategory(v)}>
+                  <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OPD">OPD</SelectItem>
+                    <SelectItem value="IPD">IPD</SelectItem>
+                    <SelectItem value="Emergency">Emergency</SelectItem>
+                    <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                    <SelectItem value="Lab">Laboratory</SelectItem>
+                    <SelectItem value="Radiology">Radiology</SelectItem>
+                    <SelectItem value="Package">Package</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Invoice Items */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg">Services / Items</h3>
+                <Button variant="outline" size="sm" onClick={handleAddItem}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Item
+                </Button>
+              </div>
+              <div className="border rounded-xl bg-card overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="w-[30%]">Service/Description</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead className="w-20">Qty</TableHead>
+                      <TableHead className="w-28">Rate (₹)</TableHead>
+                      <TableHead className="w-20">Tax %</TableHead>
+                      <TableHead className="w-32 text-right">Amount (₹)</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {newItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="p-2">
+                          <Input 
+                            placeholder="Service name..." 
+                            value={item.service}
+                            onChange={(e) => handleUpdateItem(index, 'service', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input 
+                            placeholder="Dept..." 
+                            value={item.dept}
+                            onChange={(e) => handleUpdateItem(index, 'dept', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input 
+                            type="number" min="1" 
+                            value={item.qty}
+                            onChange={(e) => handleUpdateItem(index, 'qty', Number(e.target.value))}
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input 
+                            type="number" min="0" 
+                            value={item.rate}
+                            onChange={(e) => handleUpdateItem(index, 'rate', Number(e.target.value))}
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input 
+                            type="number" min="0" 
+                            value={item.tax}
+                            onChange={(e) => handleUpdateItem(index, 'tax', Number(e.target.value))}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-medium p-2 pr-4 text-foreground/80">
+                          {item.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleRemoveItem(index)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Totals & Actions */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-6 pt-4 border-t">
+              <div className="w-full md:w-1/2 flex gap-2">
+                <Button variant="secondary" className="flex-1" onClick={() => setShowNewInvoice(false)}>Cancel</Button>
+                <Button variant="outline" className="flex-1 border-primary text-primary" onClick={handleSaveInvoice}>
+                  <Save className="h-4 w-4 mr-2" /> Save Draft
+                </Button>
+                <Button className="flex-1" onClick={handleSaveInvoice}>
+                  <CreditCard className="h-4 w-4 mr-2" /> Collect Pay
+                </Button>
+              </div>
+              
+              <div className="w-full md:w-1/3 space-y-2 bg-muted/30 p-4 rounded-xl border">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>₹{newSubtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground border-b pb-2">
+                  <span>Taxes</span>
+                  <span>₹{newTaxTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-1 text-foreground">
+                  <span>Net Amount</span>
+                  <span>₹{newNetTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

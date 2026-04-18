@@ -1,10 +1,29 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, Activity, Droplets, Thermometer, Pill, FileText, CreditCard, Plus, BedDouble, Calendar } from 'lucide-react';
+import {
+  ArrowLeft,
+  Activity,
+  Thermometer,
+  Heart,
+  Droplets,
+  Pill,
+  FlaskConical,
+  Scan,
+  Calendar,
+  ClipboardCheck,
+  ListTodo,
+  Utensils,
+  Stethoscope,
+  Workflow,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { useHospital } from '@/stores/hospitalStore';
+import { useDoctorScope } from '@/hooks/useDoctorScope';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -12,350 +31,828 @@ const fadeIn = (i: number) => ({
   transition: { delay: i * 0.04, duration: 0.3 },
 });
 
-interface IPDDetail {
-  id: string; name: string; bed: string; ward: string; uhid: string; abhaId: string;
-  age: number; gender: string; diagnosis: string;
-  condition: 'stable' | 'critical' | 'improving' | 'observation';
-  vitals: { hr: string; bp: string; spo2: string; temp: string; rr: string };
-  admitted: string; doctor: string; daysAdmitted: number;
-  medications: { name: string; dosage: string; frequency: string; route: string; status: 'active' | 'stopped' }[];
-  progressNotes: { date: string; time: string; author: string; type: string; note: string }[];
-  labResults: { date: string; test: string; key: string; value: string; flag: string }[];
-  treatmentPlan: string;
-  dietInstructions: string;
-  activityRestrictions: string;
-}
+const tabs = [
+  'Summary',
+  'Progress Notes',
+  'Orders',
+  'Medication Chart',
+  'Labs & Reports',
+  'Tasks',
+  'Discharge',
+];
 
-const conditionColors: Record<string, string> = {
+const conditionColors: Record<'stable' | 'critical' | 'improving' | 'observation', string> = {
   stable: 'bg-emerald-500/10 text-emerald-600',
   critical: 'bg-destructive/10 text-destructive',
   improving: 'bg-blue-500/10 text-blue-600',
   observation: 'bg-amber-500/10 text-amber-600',
 };
 
-const mockIPD: Record<string, IPDDetail> = {
-  '1': {
-    id: '1', name: 'Rajesh Kumar', bed: '3A-01', ward: 'General Ward 3A', uhid: 'ADR-2024-0001', abhaId: '12345678901234',
-    age: 45, gender: 'Male', diagnosis: 'Diabetic Ketoacidosis', condition: 'improving',
-    vitals: { hr: '78', bp: '120/80', spo2: '98', temp: '98.6', rr: '18' },
-    admitted: '05/03/2026', doctor: 'Dr. Amit Sharma', daysAdmitted: 3,
-    medications: [
-      { name: 'Inj. Insulin Glargine', dosage: '20 units', frequency: 'OD', route: 'SC', status: 'active' },
-      { name: 'Inj. NS 0.9%', dosage: '1L', frequency: 'BD', route: 'IV', status: 'active' },
-      { name: 'Tab. Metformin 500mg', dosage: '1 tab', frequency: 'BD', route: 'Oral', status: 'stopped' },
-    ],
-    progressNotes: [
-      { date: '2026-03-08', time: '10:30 AM', author: 'Dr. Amit Sharma', type: 'Progress Note', note: 'Patient stable. Blood sugar levels improving. FBS 142, PPBS 198. Continue current insulin regimen. Plan step-down to oral hypoglycemics by Day 5.' },
-      { date: '2026-03-08', time: '06:00 AM', author: 'Nurse Priya', type: 'Nursing Note', note: 'Morning vitals stable. Patient ambulatory. Tolerated breakfast well. No complaints of nausea.' },
-      { date: '2026-03-07', time: '03:00 PM', author: 'Dr. Amit Sharma', type: 'Progress Note', note: 'Blood sugar trending down. ABG normalized. Patient alert and oriented. Continue IV fluids and insulin drip.' },
-      { date: '2026-03-07', time: '09:00 AM', author: 'Dr. Kavita Reddy', type: 'Specialist Consult', note: 'Endocrinology opinion: Recommend insulin dose adjustment. Consider adding DPP-4 inhibitor once stable.' },
-      { date: '2026-03-06', time: '08:00 PM', author: 'Dr. Amit Sharma', type: 'Pre-operative Note', note: 'N/A — patient is medical case.' },
-      { date: '2026-03-05', time: '11:00 AM', author: 'Dr. Amit Sharma', type: 'Admission Note', note: 'Patient admitted with DKA. pH 7.18, Blood sugar 480. Started on insulin drip and aggressive IV hydration.' },
-    ],
-    labResults: [
-      { date: '2026-03-08', test: 'Blood Sugar', key: 'FBS', value: '142 mg/dL', flag: 'high' },
-      { date: '2026-03-08', test: 'Blood Sugar', key: 'PPBS', value: '198 mg/dL', flag: 'high' },
-      { date: '2026-03-07', test: 'ABG', key: 'pH', value: '7.38', flag: 'normal' },
-      { date: '2026-03-07', test: 'Electrolytes', key: 'Potassium', value: '4.2 mEq/L', flag: 'normal' },
-      { date: '2026-03-05', test: 'ABG', key: 'pH', value: '7.18', flag: 'critical' },
-    ],
-    treatmentPlan: 'Continue insulin therapy. Transition to subcutaneous insulin by Day 4. Start oral hypoglycemics Day 5. Discharge goal: FBS < 130, PPBS < 180.',
-    dietInstructions: 'Diabetic diet — 1800 cal. Low glycemic index foods. No added sugar. Small frequent meals.',
-    activityRestrictions: 'Bed rest Day 1-2. Ambulation with assistance Day 3. Free ambulation Day 4+.',
-  },
+const roundStatusStyles: Record<'pending' | 'seen' | 'follow-up-required', string> = {
+  pending: 'bg-amber-500/10 text-amber-700',
+  seen: 'bg-emerald-500/10 text-emerald-700',
+  'follow-up-required': 'bg-destructive/10 text-destructive',
 };
 
-// Fill remaining
-['Mohammed Ali', 'Sunita Devi', 'Vikram Malhotra', 'Lakshmi Nair', 'Anil Sharma'].forEach((name, i) => {
-  const id = String(i + 2);
-  mockIPD[id] = {
-    id, name, bed: `W${i + 1}-0${i + 1}`, ward: i === 4 ? 'ICU' : `Ward ${i + 1}`, uhid: `ADR-2024-${String(i + 3).padStart(4, '0')}`,
-    abhaId: `${56789012345678 + i}`, age: 48 + i * 5, gender: i % 2 === 0 ? 'Male' : 'Female',
-    diagnosis: ['COPD Exacerbation', 'AKI — CKD Stage 4', 'Post-op Appendectomy', 'CHF NYHA III', 'Acute MI Post PTCA'][i],
-    condition: (['critical', 'stable', 'improving', 'observation', 'critical'] as const)[i],
-    vitals: { hr: '84', bp: '134/86', spo2: '94', temp: '99.2', rr: '22' },
-    admitted: `0${5 + i}/03/2026`, doctor: 'Dr. Amit Sharma', daysAdmitted: 3 - i,
-    medications: [{ name: 'Tab. Paracetamol', dosage: '500mg', frequency: 'SOS', route: 'Oral', status: 'active' }],
-    progressNotes: [{ date: '2026-03-08', time: '09:00 AM', author: 'Dr. Amit Sharma', type: 'Progress Note', note: 'Patient progressing well. Vitals stable.' }],
-    labResults: [], treatmentPlan: 'Continue current management.', dietInstructions: 'Normal diet.', activityRestrictions: 'As tolerated.',
-  };
-});
+const roundStatusLabel: Record<'pending' | 'seen' | 'follow-up-required', string> = {
+  pending: 'Pending',
+  seen: 'Seen',
+  'follow-up-required': 'Follow-up required',
+};
 
-const tabOptions = ['Summary', 'Notes', 'Medications', 'Labs', 'Discharge', 'ABDM'];
-const noteTypes = ['All', 'Progress Note', 'Nursing Note', 'Specialist Consult', 'Admission Note'];
+function toCondition(input: {
+  status: string;
+  nursingPriority: string;
+  spo2?: number;
+}): 'stable' | 'critical' | 'improving' | 'observation' {
+  if (input.status === 'icu' || (typeof input.spo2 === 'number' && input.spo2 < 94)) {
+    return 'critical';
+  }
+  if (input.status === 'discharge-ready') {
+    return 'improving';
+  }
+  if (input.nursingPriority === 'high') {
+    return 'observation';
+  }
+  return 'stable';
+}
+
+function toDaysAdmitted(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 1;
+  }
+  return Math.max(1, Math.floor((Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+}
+
+function hasAbnormalResult(order: { results?: string; interpretation?: string; comments?: string; criticalAlert?: boolean }) {
+  if (order.criticalAlert) {
+    return true;
+  }
+  const merged = `${order.results || ''} ${order.interpretation || ''} ${order.comments || ''}`.toLowerCase();
+  return /(abnormal|critical|high|low|positive)/.test(merged);
+}
 
 export default function DoctorIPDPatientProfile() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Summary');
-  const [noteFilter, setNoteFilter] = useState('All');
-  const [newNote, setNewNote] = useState('');
-  const [newNoteType, setNewNoteType] = useState('Progress Note');
-  const [showOTRequest, setShowOTRequest] = useState(false);
-  const [otData, setOtData] = useState({ procedure: '', anesthetist: '', date: '', duration: '', equipment: '' });
 
-  // Discharge planning
-  const [dischargeData, setDischargeData] = useState({
-    finalDiagnosis: '', proceduresPerformed: '', treatmentSummary: '',
-    medicationsAtDischarge: '', followUpInstructions: '', dietInstructions: '',
-    activityRestrictions: '',
+  const {
+    nursingRounds,
+    doctorProgressNotes,
+    admissionTasks,
+    inpatientCareOrders,
+    prescriptions,
+    pharmacyInventory,
+    labOrders,
+    radiologyOrders,
+    saveConsultation,
+    updateAdmissionStatus,
+    addDoctorProgressNote,
+    markDoctorRoundCompleted,
+    addAdmissionTask,
+    updateAdmissionTaskStatus,
+    addInpatientCareOrder,
+    updateInpatientCareOrderStatus,
+    saveAdmissionDischargeSummary,
+    updateMedicationLineStatus,
+    getPatientWorkflowTimeline,
+  } = useHospital();
+
+  const { isDoctor, admissions, getPatient } = useDoctorScope();
+  const admission = admissions.find((item) => item.id === patientId);
+  const patient = admission ? getPatient(admission.uhid) : undefined;
+
+  const [activeTab, setActiveTab] = useState('Summary');
+  const [soapNote, setSoapNote] = useState({
+    subjective: '',
+    objective: '',
+    assessment: '',
+    plan: '',
+    followUpRequired: false,
+  });
+  const [medOrder, setMedOrder] = useState({ drug: '', dosage: '', frequency: 'BD', duration: '5 days', route: 'Oral', qty: 10 });
+  const [labOrderDraft, setLabOrderDraft] = useState<{ tests: string; priority: 'Routine' | 'Urgent' | 'Emergency' }>({
+    tests: '',
+    priority: 'Routine',
+  });
+  const [radiologyOrderDraft, setRadiologyOrderDraft] = useState<{ study: string; modality: string; priority: 'Routine' | 'Urgent' | 'Emergency' }>({
+    study: '',
+    modality: 'X-Ray',
+    priority: 'Routine',
+  });
+  const [careOrderDraft, setCareOrderDraft] = useState<{ type: 'Procedure' | 'Diet'; item: string; priority: 'Routine' | 'Urgent' | 'Emergency' }>({
+    type: 'Procedure',
+    item: '',
+    priority: 'Routine',
+  });
+  const [taskDraft, setTaskDraft] = useState('');
+  const [taskAssignee, setTaskAssignee] = useState('');
+  const [dischargeSummary, setDischargeSummary] = useState('');
+
+  useEffect(() => {
+    if (admission) {
+      setDischargeSummary(admission.dischargeSummary || '');
+      setTaskAssignee(admission.assignedNurse || 'Nurse Station');
+    }
+  }, [admission]);
+
+  if (!isDoctor || !patientId) {
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Access denied. Only doctor users can access IPD profiles.
+      </div>
+    );
+  }
+
+  if (!admission) {
+    return (
+      <div className="rounded-xl border bg-card p-6 space-y-3">
+        <h1 className="text-lg font-semibold">Admission Not Found</h1>
+        <p className="text-sm text-muted-foreground">
+          This IPD case is not in your current doctor and department scope.
+        </p>
+        <Button size="sm" onClick={() => navigate('/doctor/ipd')}>Back To IPD Rounds</Button>
+      </div>
+    );
+  }
+
+  const patientRounds = nursingRounds.filter((round) => round.admissionId === admission.id);
+  const latestRound = patientRounds[0];
+  const patientProgressNotes = doctorProgressNotes.filter((note) => note.admissionId === admission.id);
+  const patientTasks = admissionTasks.filter((task) => task.admissionId === admission.id);
+  const patientCareOrders = inpatientCareOrders.filter((order) => order.admissionId === admission.id);
+  const patientPrescriptions = prescriptions.filter((prescription) => prescription.uhid === admission.uhid);
+  const patientLabOrders = labOrders.filter((order) => order.uhid === admission.uhid);
+  const patientRadiologyOrders = radiologyOrders.filter((order) => order.uhid === admission.uhid);
+  const workflowTimeline = getPatientWorkflowTimeline(admission.uhid).slice(0, 12);
+
+  const medicationLines = patientPrescriptions.flatMap((prescription) => (
+    prescription.meds.map((medication, lineIndex) => ({
+      ...medication,
+      rxId: prescription.id,
+      lineIndex,
+      rxStatus: prescription.status,
+      orderedAt: prescription.date,
+    }))
+  ));
+
+  const activeMedications = medicationLines.filter((line) => line.status !== 'stopped');
+
+  const condition = toCondition({
+    status: admission.status,
+    nursingPriority: admission.nursingPriority,
+    spo2: latestRound?.spo2,
   });
 
-  const patient = mockIPD[patientId ?? '1'] ?? mockIPD['1'];
+  const medSuggestions = (() => {
+    const query = medOrder.drug.trim().toLowerCase();
+    if (!query) {
+      return [];
+    }
+    return pharmacyInventory
+      .filter((item) => item.drug.toLowerCase().includes(query) || item.generic.toLowerCase().includes(query))
+      .slice(0, 8);
+  })();
 
-  const filteredNotes = patient.progressNotes.filter(n => noteFilter === 'All' || n.type === noteFilter);
+  const handleAddSoapNote = () => {
+    const hasContent = [soapNote.subjective, soapNote.objective, soapNote.assessment, soapNote.plan]
+      .some((item) => item.trim().length > 0);
+
+    if (!hasContent) {
+      toast.error('Enter at least one SOAP section');
+      return;
+    }
+
+    addDoctorProgressNote({
+      admissionId: admission.id,
+      doctor: admission.roundingDoctor || admission.attendingDoctor,
+      subjective: soapNote.subjective,
+      objective: soapNote.objective,
+      assessment: soapNote.assessment,
+      plan: soapNote.plan,
+      followUpRequired: soapNote.followUpRequired,
+    });
+
+    setSoapNote({
+      subjective: '',
+      objective: '',
+      assessment: '',
+      plan: '',
+      followUpRequired: false,
+    });
+  };
+
+  const handleAddMedicationOrder = () => {
+    if (!medOrder.drug.trim()) {
+      toast.error('Enter medication name');
+      return;
+    }
+
+    saveConsultation({
+      uhid: admission.uhid,
+      patientName: admission.patientName,
+      doctor: admission.roundingDoctor || admission.attendingDoctor,
+      department: patient?.department || 'Inpatient Care',
+      medications: [{ ...medOrder }],
+    });
+
+    setMedOrder({ drug: '', dosage: '', frequency: 'BD', duration: '5 days', route: 'Oral', qty: 10 });
+  };
+
+  const handleAddLabOrder = () => {
+    if (!labOrderDraft.tests.trim()) {
+      toast.error('Enter lab test name');
+      return;
+    }
+
+    saveConsultation({
+      uhid: admission.uhid,
+      patientName: admission.patientName,
+      doctor: admission.roundingDoctor || admission.attendingDoctor,
+      department: patient?.department || 'Inpatient Care',
+      labTests: [{ tests: labOrderDraft.tests, category: 'General', priority: labOrderDraft.priority }],
+    });
+
+    setLabOrderDraft({ tests: '', priority: 'Routine' });
+  };
+
+  const handleAddRadiologyOrder = () => {
+    if (!radiologyOrderDraft.study.trim()) {
+      toast.error('Enter imaging study');
+      return;
+    }
+
+    saveConsultation({
+      uhid: admission.uhid,
+      patientName: admission.patientName,
+      doctor: admission.roundingDoctor || admission.attendingDoctor,
+      department: patient?.department || 'Inpatient Care',
+      radiologyOrders: [{
+        study: radiologyOrderDraft.study,
+        modality: radiologyOrderDraft.modality,
+        priority: radiologyOrderDraft.priority,
+      }],
+    });
+
+    setRadiologyOrderDraft({ study: '', modality: 'X-Ray', priority: 'Routine' });
+  };
+
+  const handleAddCareOrder = () => {
+    if (!careOrderDraft.item.trim()) {
+      toast.error(`Enter ${careOrderDraft.type.toLowerCase()} instruction`);
+      return;
+    }
+
+    addInpatientCareOrder({
+      admissionId: admission.id,
+      type: careOrderDraft.type,
+      item: careOrderDraft.item,
+      priority: careOrderDraft.priority,
+      orderedBy: admission.roundingDoctor || admission.attendingDoctor,
+    });
+
+    setCareOrderDraft((prev) => ({ ...prev, item: '' }));
+  };
+
+  const handleAssignTask = () => {
+    if (!taskDraft.trim()) {
+      toast.error('Enter task details');
+      return;
+    }
+
+    addAdmissionTask({
+      admissionId: admission.id,
+      task: taskDraft,
+      assignedTo: taskAssignee || admission.assignedNurse || 'Nurse Station',
+      createdBy: admission.roundingDoctor || admission.attendingDoctor,
+    });
+
+    setTaskDraft('');
+  };
+
+  const handleSaveDischargeSummary = () => {
+    if (!dischargeSummary.trim()) {
+      toast.error('Enter discharge summary');
+      return;
+    }
+    saveAdmissionDischargeSummary(
+      admission.id,
+      dischargeSummary,
+      admission.roundingDoctor || admission.attendingDoctor,
+    );
+  };
+
+  const handleMarkDischargeReady = () => {
+    if (dischargeSummary.trim()) {
+      saveAdmissionDischargeSummary(
+        admission.id,
+        dischargeSummary,
+        admission.roundingDoctor || admission.attendingDoctor,
+      );
+    }
+    updateAdmissionStatus(admission.id, 'discharge-ready');
+  };
 
   const vitalsCards = [
-    { label: 'Heart Rate', value: patient.vitals.hr, unit: 'bpm', icon: Heart, color: 'text-red-500' },
-    { label: 'Blood Pressure', value: patient.vitals.bp, unit: 'mmHg', icon: Activity, color: 'text-blue-500' },
-    { label: 'SpO2', value: patient.vitals.spo2 + '%', unit: '', icon: Droplets, color: 'text-amber-500' },
-    { label: 'Temperature', value: patient.vitals.temp, unit: '°F', icon: Thermometer, color: 'text-orange-500' },
+    { label: 'Pulse', value: latestRound ? String(latestRound.pulse) : '--', unit: 'bpm', icon: Heart, color: 'text-red-500' },
+    { label: 'BP', value: latestRound?.bp || '--', unit: 'mmHg', icon: Activity, color: 'text-blue-500' },
+    { label: 'SpO2', value: latestRound ? `${latestRound.spo2}` : '--', unit: '%', icon: Droplets, color: 'text-amber-500' },
+    { label: 'Temp', value: latestRound ? String(latestRound.temp) : '--', unit: 'F', icon: Thermometer, color: 'text-orange-500' },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <motion.div {...fadeIn(0)} className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/doctor/ipd')} className="p-2 rounded-lg hover:bg-accent transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight">{patient.name}</h1>
-              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${conditionColors[patient.condition]}`}>{patient.condition}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold tracking-tight">{admission.patientName}</h1>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${conditionColors[condition]}`}>
+                {condition}
+              </span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${roundStatusStyles[admission.doctorRoundStatus]}`}>
+                {roundStatusLabel[admission.doctorRoundStatus]}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              ⌂ {patient.bed} · {patient.uhid} · Day {patient.daysAdmitted} · {patient.age}y/{patient.gender} · {patient.diagnosis}
+              {admission.bed} · {admission.ward}{admission.room ? ` · ${admission.room}` : ''} · Day {toDaysAdmitted(admission.admittedAt)} · {admission.uhid}
             </p>
+            {admission.lastDoctorRoundAt && (
+              <p className="text-xs text-muted-foreground mt-0.5">Last doctor round: {admission.lastDoctorRoundAt}</p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowOTRequest(!showOTRequest)}>OT Request</Button>
-          <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={() => setActiveTab('Discharge')}>Discharge</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => markDoctorRoundCompleted(admission.id, admission.roundingDoctor || admission.attendingDoctor)}
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 mr-1" /> Mark Round Completed
+          </Button>
+          <Button size="sm" onClick={() => navigate(`/doctor/consultation/${admission.uhid}`)}>Open Consultation</Button>
         </div>
       </motion.div>
 
-      {/* OT Request Panel */}
-      {showOTRequest && (
-        <motion.div {...fadeIn(0)} className="border rounded-xl bg-card p-4">
-          <p className="text-sm font-semibold mb-3 flex items-center gap-1.5"><BedDouble className="w-4 h-4" /> Operation Theatre Request</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Procedure type" value={otData.procedure} onChange={e => setOtData({ ...otData, procedure: e.target.value })} className="h-8 text-xs" />
-            <Input placeholder="Anesthetist" value={otData.anesthetist} onChange={e => setOtData({ ...otData, anesthetist: e.target.value })} className="h-8 text-xs" />
-            <Input type="date" value={otData.date} onChange={e => setOtData({ ...otData, date: e.target.value })} className="h-8 text-xs" />
-            <Input placeholder="Est. duration" value={otData.duration} onChange={e => setOtData({ ...otData, duration: e.target.value })} className="h-8 text-xs" />
-            <Input placeholder="Required equipment" value={otData.equipment} onChange={e => setOtData({ ...otData, equipment: e.target.value })} className="h-8 text-xs col-span-2" />
-          </div>
-          <Button size="sm" className="mt-3 text-xs">Submit OT Request</Button>
-        </motion.div>
-      )}
-
-      {/* Vitals Cards */}
-      <motion.div {...fadeIn(1)} className="grid grid-cols-4 gap-4">
-        {vitalsCards.map(v => (
-          <div key={v.label} className="border rounded-xl bg-card p-4 flex items-center gap-3">
+      <motion.div {...fadeIn(1)} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {vitalsCards.map((card) => (
+          <div key={card.label} className="border rounded-xl bg-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <v.icon className={`w-5 h-5 ${v.color}`} />
+              <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">{v.label}</p>
-              <p className="text-xl font-bold">{v.value} <span className="text-xs font-normal text-muted-foreground">{v.unit}</span></p>
+              <p className="text-xs text-muted-foreground">{card.label}</p>
+              <p className="text-xl font-bold">{card.value} <span className="text-xs font-normal text-muted-foreground">{card.unit}</span></p>
             </div>
           </div>
         ))}
       </motion.div>
 
-      {/* Tabs */}
       <motion.div {...fadeIn(2)} className="border rounded-xl bg-card overflow-hidden">
         <div className="border-b">
           <div className="flex overflow-x-auto">
-            {tabOptions.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-5 py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
+                  activeTab === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
                 {tab}
-                {activeTab === tab && <motion.div layoutId="ipdTab" className="absolute inset-x-2 -bottom-px h-0.5 bg-foreground rounded-full" />}
+                {activeTab === tab && <motion.div layoutId="ipdProfileTab" className="absolute inset-x-2 -bottom-px h-0.5 bg-foreground rounded-full" />}
               </button>
             ))}
           </div>
         </div>
 
         <div className="p-6">
-          {/* Summary */}
           {activeTab === 'Summary' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Admission Info</p>
-                  <div className="space-y-2.5">
-                    {[
-                      { label: 'Admitted', value: patient.admitted },
-                      { label: 'Day', value: `Day ${patient.daysAdmitted}` },
-                      { label: 'Ward', value: patient.ward },
-                      { label: 'Bed', value: patient.bed },
-                      { label: 'Doctor', value: patient.doctor },
-                    ].map(row => (
-                      <div key={row.label} className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{row.label}</span>
-                        <span className="font-medium">{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Treatment Plan</p>
-                  <p className="text-sm">{patient.treatmentPlan}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-4 mb-2">Diet</p>
-                  <p className="text-sm text-muted-foreground">{patient.dietInstructions}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-4 mb-2">Activity</p>
-                  <p className="text-sm text-muted-foreground">{patient.activityRestrictions}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Clinical Notes */}
-          {activeTab === 'Notes' && (
-            <div className="space-y-4">
-              {/* Add note */}
-              <div className="border rounded-lg p-4 bg-accent/20">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold">Add Clinical Note</p>
-                  <select value={newNoteType} onChange={e => setNewNoteType(e.target.value)} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-                    <option>Progress Note</option>
-                    <option>Pre-operative Note</option>
-                    <option>Post-operative Note</option>
-                    <option>Emergency Note</option>
-                    <option>Specialist Consult</option>
-                  </select>
-                </div>
-                <Textarea placeholder="Write clinical note..." value={newNote} onChange={e => setNewNote(e.target.value)} className="text-xs min-h-[60px] resize-none" />
-                <Button size="sm" className="mt-2 text-xs" onClick={() => setNewNote('')}>Save Note</Button>
-              </div>
-
-              {/* Filter */}
-              <div className="flex gap-1.5">
-                {noteTypes.map(f => (
-                  <button key={f} onClick={() => setNoteFilter(f)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${noteFilter === f ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              {/* Notes timeline */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-3">
-                {filteredNotes.map((note, i) => (
-                  <div key={i} className="border rounded-xl p-4 relative">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold">{note.author}</p>
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{note.type}</span>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Patient Summary</p>
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Diagnosis</span><span className="font-medium text-right max-w-[60%]">{admission.primaryDiagnosis}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Admission Date</span><span className="font-medium">{admission.admittedAt}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Current Treatment Plan</span><span className="font-medium text-right max-w-[60%]">{admission.currentTreatmentPlan || 'Not recorded yet'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Allergies</span><span className="font-medium text-right max-w-[60%]">{patient?.allergies || 'None documented'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Comorbidities</span><span className="font-medium text-right max-w-[60%]">{patient?.chronicDiseases || 'None documented'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Latest Vitals Snapshot</span><span className="font-medium text-right max-w-[60%]">{latestRound ? `${latestRound.bp} · P ${latestRound.pulse} · T ${latestRound.temp}F · SpO2 ${latestRound.spo2}%` : 'No vitals available'}</span></div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Vitals And Nursing Data</p>
+                <div className="space-y-2">
+                  {patientRounds.slice(0, 5).map((round) => (
+                    <div key={round.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-semibold">{round.nurse} · {round.shift} Shift</p>
+                        <p className="text-xs text-muted-foreground">{round.recordedAt}</p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">{note.date} · {note.time}</p>
+                      <p className="text-xs text-muted-foreground">BP {round.bp} · Pulse {round.pulse} · Temp {round.temp}F · SpO2 {round.spo2}% · Pain {round.painScore}/10</p>
+                      <p className="text-sm mt-1">{round.notes}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{note.note}</p>
+                  ))}
+                  {patientRounds.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No nursing rounds recorded yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Progress Notes' && (
+            <div className="space-y-5">
+              <div className="border rounded-lg p-4 bg-accent/20 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Add Daily Progress Note (SOAP)</p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                  <Textarea
+                    placeholder="Subjective"
+                    value={soapNote.subjective}
+                    onChange={(event) => setSoapNote((prev) => ({ ...prev, subjective: event.target.value }))}
+                    className="text-xs min-h-[90px]"
+                  />
+                  <Textarea
+                    placeholder="Objective"
+                    value={soapNote.objective}
+                    onChange={(event) => setSoapNote((prev) => ({ ...prev, objective: event.target.value }))}
+                    className="text-xs min-h-[90px]"
+                  />
+                  <Textarea
+                    placeholder="Assessment"
+                    value={soapNote.assessment}
+                    onChange={(event) => setSoapNote((prev) => ({ ...prev, assessment: event.target.value }))}
+                    className="text-xs min-h-[90px]"
+                  />
+                  <Textarea
+                    placeholder="Plan"
+                    value={soapNote.plan}
+                    onChange={(event) => setSoapNote((prev) => ({ ...prev, plan: event.target.value }))}
+                    className="text-xs min-h-[90px]"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    value={soapNote.followUpRequired ? 'yes' : 'no'}
+                    onValueChange={(value) => setSoapNote((prev) => ({ ...prev, followUpRequired: value === 'yes' }))}
+                  >
+                    <SelectTrigger className="h-8 text-xs w-[220px]">
+                      <SelectValue placeholder="Follow-up required?" />
+                    </SelectTrigger>
+                    <SelectContent portal className="z-[120]">
+                      <SelectItem value="no">No follow-up required</SelectItem>
+                      <SelectItem value="yes">Follow-up required</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="h-8 text-xs" onClick={handleAddSoapNote}>
+                    <Stethoscope className="w-3.5 h-3.5 mr-1" /> Save SOAP Note
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Progress Notes History</p>
+                  {patientProgressNotes.map((note) => (
+                    <div key={note.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold">{note.doctor}</p>
+                        <p className="text-xs text-muted-foreground">{note.createdAt}</p>
+                      </div>
+                      <p className="text-xs"><span className="font-semibold">S:</span> {note.subjective || '—'}</p>
+                      <p className="text-xs"><span className="font-semibold">O:</span> {note.objective || '—'}</p>
+                      <p className="text-xs"><span className="font-semibold">A:</span> {note.assessment || '—'}</p>
+                      <p className="text-xs"><span className="font-semibold">P:</span> {note.plan || '—'}</p>
+                    </div>
+                  ))}
+                  {patientProgressNotes.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No doctor progress notes yet.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Complete Timeline</p>
+                  {workflowTimeline.map((event) => (
+                    <div key={event.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide">{event.module}</p>
+                        <p className="text-[11px] text-muted-foreground">{event.timestamp}</p>
+                      </div>
+                      <p className="text-sm">{event.details}</p>
+                    </div>
+                  ))}
+                  {workflowTimeline.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No timeline activity found yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Orders' && (
+            <div className="space-y-5">
+              <div className="border rounded-lg p-4 bg-accent/20 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Management</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="relative">
+                    <Input
+                      placeholder="Medication name"
+                      value={medOrder.drug}
+                      onChange={(event) => setMedOrder((prev) => ({ ...prev, drug: event.target.value }))}
+                      className="h-8 text-xs"
+                    />
+                    {medSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 z-[120] rounded-lg border bg-card shadow-lg max-h-48 overflow-y-auto">
+                        {medSuggestions.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setMedOrder((prev) => ({ ...prev, drug: item.drug }))}
+                            className="w-full px-2 py-1.5 text-left text-xs hover:bg-accent transition-colors"
+                          >
+                            <span className="font-medium">{item.drug}</span>
+                            <span className="ml-2 text-muted-foreground">{item.generic}</span>
+                            <span className={`ml-2 ${item.qty > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                              {item.qty > 0 ? `Stock ${item.qty}` : 'Out of stock'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Input placeholder="Dosage" value={medOrder.dosage} onChange={(event) => setMedOrder((prev) => ({ ...prev, dosage: event.target.value }))} className="h-8 text-xs" />
+                  <Input placeholder="Frequency" value={medOrder.frequency} onChange={(event) => setMedOrder((prev) => ({ ...prev, frequency: event.target.value }))} className="h-8 text-xs" />
+                  <Input placeholder="Duration" value={medOrder.duration} onChange={(event) => setMedOrder((prev) => ({ ...prev, duration: event.target.value }))} className="h-8 text-xs" />
+                  <Input placeholder="Route" value={medOrder.route} onChange={(event) => setMedOrder((prev) => ({ ...prev, route: event.target.value }))} className="h-8 text-xs" />
+                  <Input type="number" min={1} placeholder="Qty" value={medOrder.qty} onChange={(event) => setMedOrder((prev) => ({ ...prev, qty: Number(event.target.value) || 1 }))} className="h-8 text-xs" />
+                </div>
+                <Button size="sm" className="text-xs h-8" onClick={handleAddMedicationOrder}>
+                  <Pill className="w-3.5 h-3.5 mr-1" /> Prescribe Medication
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lab And Imaging</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Input placeholder="Lab test" value={labOrderDraft.tests} onChange={(event) => setLabOrderDraft((prev) => ({ ...prev, tests: event.target.value }))} className="h-8 text-xs md:col-span-2" />
+                    <Select value={labOrderDraft.priority} onValueChange={(value) => setLabOrderDraft((prev) => ({ ...prev, priority: value as 'Routine' | 'Urgent' | 'Emergency' }))}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent portal className="z-[120]">
+                        <SelectItem value="Routine">Routine</SelectItem>
+                        <SelectItem value="Urgent">Urgent</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button size="sm" className="h-8 text-xs" onClick={handleAddLabOrder}><FlaskConical className="w-3.5 h-3.5 mr-1" /> Order Lab Test</Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Input placeholder="Procedure / Imaging" value={radiologyOrderDraft.study} onChange={(event) => setRadiologyOrderDraft((prev) => ({ ...prev, study: event.target.value }))} className="h-8 text-xs md:col-span-2" />
+                    <Input placeholder="Modality" value={radiologyOrderDraft.modality} onChange={(event) => setRadiologyOrderDraft((prev) => ({ ...prev, modality: event.target.value }))} className="h-8 text-xs" />
+                    <Select value={radiologyOrderDraft.priority} onValueChange={(value) => setRadiologyOrderDraft((prev) => ({ ...prev, priority: value as 'Routine' | 'Urgent' | 'Emergency' }))}>
+                      <SelectTrigger className="h-8 text-xs md:col-span-2">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent portal className="z-[120]">
+                        <SelectItem value="Routine">Routine</SelectItem>
+                        <SelectItem value="Urgent">Urgent</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="h-8 text-xs" onClick={handleAddRadiologyOrder}><Scan className="w-3.5 h-3.5 mr-1" /> Request Imaging</Button>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Procedure And Diet Instructions</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Select value={careOrderDraft.type} onValueChange={(value) => setCareOrderDraft((prev) => ({ ...prev, type: value as 'Procedure' | 'Diet' }))}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent portal className="z-[120]">
+                        <SelectItem value="Procedure">Procedure</SelectItem>
+                        <SelectItem value="Diet">Diet</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder={careOrderDraft.type === 'Diet' ? 'Diet instruction' : 'Procedure request'}
+                      value={careOrderDraft.item}
+                      onChange={(event) => setCareOrderDraft((prev) => ({ ...prev, item: event.target.value }))}
+                      className="h-8 text-xs md:col-span-2"
+                    />
+                    <Select value={careOrderDraft.priority} onValueChange={(value) => setCareOrderDraft((prev) => ({ ...prev, priority: value as 'Routine' | 'Urgent' | 'Emergency' }))}>
+                      <SelectTrigger className="h-8 text-xs md:col-span-2">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent portal className="z-[120]">
+                        <SelectItem value="Routine">Routine</SelectItem>
+                        <SelectItem value="Urgent">Urgent</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="h-8 text-xs" onClick={handleAddCareOrder}>
+                      {careOrderDraft.type === 'Diet' ? <Utensils className="w-3.5 h-3.5 mr-1" /> : <Workflow className="w-3.5 h-3.5 mr-1" />}
+                      Add {careOrderDraft.type}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Current Procedure And Diet Orders</p>
+                {patientCareOrders.map((order) => (
+                  <div key={order.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">{order.type}: {order.item}</p>
+                      <p className="text-xs text-muted-foreground">{order.priority} · {order.orderedBy} · {order.orderedAt}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{order.status}</span>
+                      {order.status !== 'Completed' ? (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateInpatientCareOrderStatus(order.id, 'Completed')}>
+                          Complete
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateInpatientCareOrderStatus(order.id, 'Pending')}>
+                          Reopen
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
+                {patientCareOrders.length === 0 && <p className="text-sm text-muted-foreground">No procedure or diet orders yet.</p>}
               </div>
             </div>
           )}
 
-          {/* Medications */}
-          {activeTab === 'Medications' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Current Medication Orders</p>
-                <Button variant="outline" size="sm" className="text-xs h-7 gap-1"><Plus className="w-3 h-3" /> Add Order</Button>
+          {activeTab === 'Medication Chart' && (
+            <div className="space-y-4">
+              <div className="border rounded-lg p-3 bg-accent/20">
+                <p className="text-sm font-semibold">Active Medications ({activeMedications.length})</p>
               </div>
-              {patient.medications.map((med, i) => (
-                <div key={i} className={`border rounded-lg p-3 flex items-center justify-between ${med.status === 'stopped' ? 'opacity-50' : ''}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{med.name}</p>
-                      <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full ${med.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground line-through'}`}>{med.status}</span>
+
+              <div className="space-y-2">
+                {medicationLines.map((line) => {
+                  const medStatus = line.status || 'active';
+                  return (
+                    <div key={`${line.rxId}-${line.lineIndex}`} className="border rounded-lg p-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">{line.drug}</p>
+                        <p className="text-xs text-muted-foreground">{line.dosage} · {line.frequency} · {line.route} · Qty {line.qty}</p>
+                        <p className="text-xs text-muted-foreground">Start: {line.startAt || line.orderedAt}{line.stopAt ? ` · Stop: ${line.stopAt}` : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${medStatus === 'active' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-muted text-muted-foreground'}`}>
+                          {medStatus}
+                        </span>
+                        {medStatus === 'active' ? (
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateMedicationLineStatus(line.rxId, line.lineIndex, 'stopped')}>
+                            Stop
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateMedicationLineStatus(line.rxId, line.lineIndex, 'active')}>
+                            Start
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">{med.dosage} · {med.frequency} · {med.route}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-xs h-7">{med.status === 'active' ? 'Stop' : 'Resume'}</Button>
+                  );
+                })}
+                {medicationLines.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No medication chart entries yet.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Labs & Reports' && (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold mb-2">Lab Results</p>
+                <div className="space-y-2">
+                  {patientLabOrders.map((order) => {
+                    const abnormal = hasAbnormalResult(order);
+                    return (
+                      <div key={order.orderId} className={`border rounded-lg p-3 ${abnormal ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium">{order.tests}</p>
+                          <p className="text-xs text-muted-foreground">{order.orderTime}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-1">{order.orderId} · {order.priority} · {order.stage}</p>
+                        <p className="text-sm">{order.results || order.interpretation || 'Result pending'}</p>
+                        {abnormal && (
+                          <p className="text-xs font-semibold text-destructive mt-1">Abnormal value detected</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {patientLabOrders.length === 0 && <p className="text-sm text-muted-foreground">No lab orders yet.</p>}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Imaging Reports</p>
+                <div className="space-y-2">
+                  {patientRadiologyOrders.map((order) => (
+                    <div key={order.orderId} className={`border rounded-lg p-3 ${order.critical ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium">{order.study}</p>
+                        <p className="text-xs text-muted-foreground">{order.orderTime}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">{order.orderId} · {order.modality} · {order.status}</p>
+                      <p className="text-sm">{order.reportImpression || order.reportFindings || 'Report pending'}</p>
+                      {order.critical && <p className="text-xs font-semibold text-destructive mt-1">Critical radiology alert</p>}
+                    </div>
+                  ))}
+                  {patientRadiologyOrders.length === 0 && <p className="text-sm text-muted-foreground">No imaging orders yet.</p>}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Labs */}
-          {activeTab === 'Labs' && (
-            <div className="space-y-2">
-              {patient.labResults.length === 0 ? (
-                <div className="flex flex-col items-center py-16"><Activity className="w-8 h-8 text-muted-foreground mb-3" /><p className="text-sm">No lab results yet</p></div>
-              ) : (
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 px-3 text-muted-foreground font-semibold">Date</th>
-                      <th className="text-left py-2 px-3 text-muted-foreground font-semibold">Test</th>
-                      <th className="text-left py-2 px-3 text-muted-foreground font-semibold">Parameter</th>
-                      <th className="text-left py-2 px-3 text-muted-foreground font-semibold">Value</th>
-                      <th className="text-left py-2 px-3 text-muted-foreground font-semibold">Flag</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {patient.labResults.map((r, i) => (
-                      <tr key={i} className="hover:bg-accent/30">
-                        <td className="py-2 px-3 text-muted-foreground">{r.date}</td>
-                        <td className="py-2 px-3">{r.test}</td>
-                        <td className="py-2 px-3 font-medium">{r.key}</td>
-                        <td className="py-2 px-3">{r.value}</td>
-                        <td className="py-2 px-3">
-                          <span className={`text-[10px] font-semibold uppercase ${r.flag === 'critical' ? 'text-destructive' : r.flag === 'high' ? 'text-amber-600' : 'text-emerald-600'}`}>{r.flag}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+          {activeTab === 'Tasks' && (
+            <div className="space-y-5">
+              <div className="border rounded-lg p-4 bg-accent/20 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Task And Follow-up</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Input
+                    placeholder="Task for nursing"
+                    value={taskDraft}
+                    onChange={(event) => setTaskDraft(event.target.value)}
+                    className="h-8 text-xs md:col-span-2"
+                  />
+                  <Input
+                    placeholder="Assign to"
+                    value={taskAssignee}
+                    onChange={(event) => setTaskAssignee(event.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Button size="sm" className="h-8 text-xs" onClick={handleAssignTask}>
+                  <ListTodo className="w-3.5 h-3.5 mr-1" /> Assign Task
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {patientTasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">{task.task}</p>
+                      <p className="text-xs text-muted-foreground">{task.assignedTo} · {task.createdAt}{task.completedAt ? ` · Completed ${task.completedAt}` : ''}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${task.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'}`}>
+                        {task.status}
+                      </span>
+                      {task.status === 'Pending' ? (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateAdmissionTaskStatus(task.id, 'Completed')}>
+                          Mark Completed
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => updateAdmissionTaskStatus(task.id, 'Pending')}>
+                          Mark Pending
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {patientTasks.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No nursing tasks assigned yet.</p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Discharge Planning */}
           {activeTab === 'Discharge' && (
             <div className="space-y-4">
               <p className="text-sm font-semibold flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Discharge Planning</p>
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { label: 'Final Diagnosis', key: 'finalDiagnosis' as const, placeholder: 'Final diagnosis with ICD codes...' },
-                  { label: 'Procedures Performed', key: 'proceduresPerformed' as const, placeholder: 'List procedures...' },
-                  { label: 'Treatment Summary', key: 'treatmentSummary' as const, placeholder: 'Summary of treatment given during stay...' },
-                  { label: 'Medications at Discharge', key: 'medicationsAtDischarge' as const, placeholder: 'Discharge medications...' },
-                  { label: 'Follow-up Instructions', key: 'followUpInstructions' as const, placeholder: 'Follow-up date, required tests...' },
-                  { label: 'Diet Instructions', key: 'dietInstructions' as const, placeholder: 'Diet plan...' },
-                  { label: 'Activity Restrictions', key: 'activityRestrictions' as const, placeholder: 'Activity limitations...' },
-                ].map(field => (
-                  <div key={field.key}>
-                    <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{field.label}</label>
-                    <Textarea
-                      placeholder={field.placeholder}
-                      value={dischargeData[field.key]}
-                      onChange={e => setDischargeData({ ...dischargeData, [field.key]: e.target.value })}
-                      className="text-xs min-h-[50px] resize-none mt-1"
-                    />
-                  </div>
-                ))}
+              <Textarea
+                placeholder="Add discharge summary, medication instructions, and follow-up plan..."
+                value={dischargeSummary}
+                onChange={(event) => setDischargeSummary(event.target.value)}
+                className="text-xs min-h-[160px] resize-none"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={handleSaveDischargeSummary}>
+                  Save Discharge Summary
+                </Button>
+                <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={handleMarkDischargeReady}>
+                  Mark Ready For Discharge
+                </Button>
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90">Finalize & Generate Summary</Button>
-                <Button variant="outline" size="sm">Save Draft</Button>
+              <div className="text-xs text-muted-foreground">
+                <p>Status: {admission.status}</p>
+                {admission.dischargeReadyAt && <p>Marked ready at: {admission.dischargeReadyAt}</p>}
               </div>
-            </div>
-          )}
-
-          {/* ABDM */}
-          {activeTab === 'ABDM' && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <CreditCard className="w-8 h-8 text-muted-foreground mb-3" />
-              <p className="text-sm font-medium">ABDM Records</p>
-              <p className="text-xs text-muted-foreground mt-1">ABHA ID: {patient.abhaId}</p>
-              <Button variant="outline" size="sm" className="mt-4 text-xs">Fetch Records</Button>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,24 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Activity, Droplets, Heart, Search, Thermometer, Wind } from "lucide-react";
-
-const VITALS_LOG = [
-  { id: "V001", uhid: "UH-2024-0012", patient: "Ramesh Kumar", bed: "ICU-03", bp: "128/82", pulse: 88, rr: 18, temp: 98.6, spo2: 95, nurse: "Nurse Priya", time: "08:00 AM", flag: "" },
-  { id: "V002", uhid: "UH-2024-0103", patient: "Vikram Singh", bed: "ICU-07", bp: "110/70", pulse: 102, rr: 22, temp: 100.2, spo2: 92, nurse: "Nurse Priya", time: "08:05 AM", flag: "SpO2 low" },
-  { id: "V003", uhid: "UH-2024-0045", patient: "Anita Sharma", bed: "W2-05", bp: "118/76", pulse: 78, rr: 16, temp: 99.1, spo2: 97, nurse: "Nurse Priya", time: "08:15 AM", flag: "" },
-  { id: "V004", uhid: "UH-2024-0078", patient: "Suresh Patel", bed: "W2-08", bp: "140/90", pulse: 82, rr: 17, temp: 98.4, spo2: 98, nurse: "Nurse Priya", time: "08:20 AM", flag: "BP high" },
-];
-
-const IO_RECORDS = [
-  { id: "IO001", uhid: "UH-2024-0012", patient: "Ramesh Kumar", bed: "ICU-03", intakeOral: 100, intakeIV: 500, intakeBlood: 0, outputUrine: 200, outputDrain: 50, outputVomit: 0, balance: "+350", time: "08:00 AM", nurse: "Nurse Priya" },
-  { id: "IO002", uhid: "UH-2024-0103", patient: "Vikram Singh", bed: "ICU-07", intakeOral: 0, intakeIV: 1000, intakeBlood: 0, outputUrine: 320, outputDrain: 0, outputVomit: 0, balance: "+680", time: "08:00 AM", nurse: "Nurse Priya" },
-];
-
-const PAIN_ASSESSMENTS = [
-  { id: "PA001", uhid: "UH-2024-0012", patient: "Ramesh Kumar", score: 6, location: "Chest / Sternum", description: "Dull ache, worse on deep breathing", time: "08:00 AM" },
-  { id: "PA002", uhid: "UH-2024-0078", patient: "Suresh Patel", score: 4, location: "Right hip", description: "Moderate pain on movement, manageable at rest", time: "08:20 AM" },
-  { id: "PA003", uhid: "UH-2024-0103", patient: "Vikram Singh", score: 2, location: "General", description: "Sedated, minimal response to pain stimuli", time: "08:05 AM" },
-];
+import { useHospital } from "@/stores/hospitalStore";
 
 const painColor = (score: number) => {
   if (score >= 7) return "destructive";
@@ -35,19 +18,102 @@ const painColor = (score: number) => {
   return "outline";
 };
 
-export default function NurseVitals() {
-  const [search, setSearch] = useState("");
+const shiftOptions = ["Morning", "Evening", "Night"] as const;
 
-  const filteredVitals = VITALS_LOG.filter(v =>
-    v.patient.toLowerCase().includes(search.toLowerCase()) || v.uhid.includes(search)
-  );
+export default function NurseVitals() {
+  const { admissions, nursingRounds, addNursingRound } = useHospital();
+  const [search, setSearch] = useState("");
+  const [selectedAdmissionId, setSelectedAdmissionId] = useState("");
+  const [shift, setShift] = useState<(typeof shiftOptions)[number]>("Morning");
+  const [roundForm, setRoundForm] = useState({
+    nurse: "Nurse Priya",
+    bp: "120/80",
+    pulse: 80,
+    temp: 98.6,
+    spo2: 98,
+    painScore: 2,
+    notes: "Patient stable. Continue protocol.",
+  });
+
+  const activeAdmissions = useMemo(() => admissions.filter((admission) => admission.status !== "discharged"), [admissions]);
+
+  const latestRounds = useMemo(() => {
+    const map = new Map<string, (typeof nursingRounds)[number]>();
+    nursingRounds.forEach((round) => {
+      if (!map.has(round.admissionId)) {
+        map.set(round.admissionId, round);
+      }
+    });
+    return Array.from(map.values()).filter((round) => {
+      const query = search.toLowerCase();
+      return round.patientName.toLowerCase().includes(query) || round.uhid.toLowerCase().includes(query) || round.ward.toLowerCase().includes(query);
+    });
+  }, [nursingRounds, search]);
+
+  const ioRows = useMemo(() => {
+    return latestRounds.map((round) => {
+      const intakeIv = round.shift === "Morning" ? 500 : round.shift === "Evening" ? 350 : 200;
+      const outputUrine = Math.max(120, 260 - round.painScore * 15);
+      const outputDrain = round.ward.includes("ICU") ? 40 : 10;
+      const balance = intakeIv - outputUrine - outputDrain;
+      return {
+        ...round,
+        intakeOral: 100,
+        intakeIV: intakeIv,
+        intakeBlood: 0,
+        outputUrine,
+        outputDrain,
+        outputVomit: 0,
+        balance: `${balance >= 0 ? "+" : ""}${balance}`,
+      };
+    });
+  }, [latestRounds]);
+
+  const painRows = useMemo(() => latestRounds.filter((round) => round.painScore > 0), [latestRounds]);
+
+  const fallRiskRows = useMemo(() => {
+    return activeAdmissions.map((admission) => {
+      const latest = nursingRounds.find((round) => round.admissionId === admission.id);
+      const score = latest ? Math.min(65, 20 + (latest.painScore * 4) + (latest.spo2 < 95 ? 20 : 0) + (admission.nursingPriority === "high" ? 15 : 0)) : 20;
+      const risk = score >= 50 ? "High" : score >= 30 ? "Moderate" : "Low";
+      return {
+        admission,
+        score,
+        risk,
+        measures: risk === "High"
+          ? "Bed rails up, call bell within reach, non-slip socks"
+          : risk === "Moderate"
+            ? "Assisted mobility, bedside safety checks"
+            : "Standard precautions",
+      };
+    }).sort((left, right) => right.score - left.score);
+  }, [activeAdmissions, nursingRounds]);
+
+  const handleSaveRound = () => {
+    if (!selectedAdmissionId) return;
+
+    const admission = admissions.find((item) => item.id === selectedAdmissionId);
+    if (!admission) return;
+
+    addNursingRound({
+      admissionId: selectedAdmissionId,
+      nurse: roundForm.nurse,
+      shift,
+      bp: roundForm.bp,
+      pulse: Number(roundForm.pulse),
+      temp: Number(roundForm.temp),
+      spo2: Number(roundForm.spo2),
+      painScore: Number(roundForm.painScore),
+      notes: roundForm.notes,
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Vitals & Monitoring</h1>
-          <p className="text-sm text-muted-foreground mt-1">Vital signs, intake/output, pain assessment & fall risk</p>
+          <p className="text-sm text-muted-foreground mt-1">Vital signs, intake/output, pain assessment, and fall risk</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
@@ -56,19 +122,61 @@ export default function NurseVitals() {
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Record Vital Signs</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
-              <div><Label>Patient (UHID)</Label><Input placeholder="Search patient..." /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Blood Pressure</Label><Input placeholder="e.g. 120/80" /></div>
-                <div><Label>Pulse Rate (bpm)</Label><Input type="number" placeholder="72" /></div>
-                <div><Label>Respiratory Rate</Label><Input type="number" placeholder="16" /></div>
-                <div><Label>Temperature (°F)</Label><Input type="number" step="0.1" placeholder="98.6" /></div>
-                <div><Label>SpO2 (%)</Label><Input type="number" placeholder="98" /></div>
-                <div><Label>Blood Sugar (mg/dL)</Label><Input type="number" placeholder="Optional" /></div>
-                <div><Label>Height (cm)</Label><Input type="number" placeholder="Optional" /></div>
-                <div><Label>Weight (kg)</Label><Input type="number" placeholder="Optional" /></div>
+              <div>
+                <Label>Admission</Label>
+                <Select value={selectedAdmissionId} onValueChange={setSelectedAdmissionId}>
+                  <SelectTrigger><SelectValue placeholder="Select patient admission" /></SelectTrigger>
+                  <SelectContent>
+                    {admissions.map((admission) => (
+                      <SelectItem key={admission.id} value={admission.id}>
+                        {admission.patientName} · {admission.ward} ({admission.bed})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div><Label>Observations</Label><Textarea placeholder="Any clinical observations..." /></div>
-              <Button className="w-full">Save Vitals</Button>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Nurse</Label>
+                  <Input value={roundForm.nurse} onChange={(event) => setRoundForm((prev) => ({ ...prev, nurse: event.target.value }))} />
+                </div>
+                <div>
+                  <Label>Shift</Label>
+                  <Select value={shift} onValueChange={(value) => setShift(value as (typeof shiftOptions)[number])}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {shiftOptions.map((option) => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Blood Pressure</Label>
+                  <Input value={roundForm.bp} onChange={(event) => setRoundForm((prev) => ({ ...prev, bp: event.target.value }))} />
+                </div>
+                <div>
+                  <Label>Pulse Rate</Label>
+                  <Input type="number" value={roundForm.pulse} onChange={(event) => setRoundForm((prev) => ({ ...prev, pulse: Number(event.target.value) }))} />
+                </div>
+                <div>
+                  <Label>Temperature</Label>
+                  <Input type="number" step="0.1" value={roundForm.temp} onChange={(event) => setRoundForm((prev) => ({ ...prev, temp: Number(event.target.value) }))} />
+                </div>
+                <div>
+                  <Label>SpO2</Label>
+                  <Input type="number" value={roundForm.spo2} onChange={(event) => setRoundForm((prev) => ({ ...prev, spo2: Number(event.target.value) }))} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Pain Score</Label>
+                  <Input type="number" min={0} max={10} value={roundForm.painScore} onChange={(event) => setRoundForm((prev) => ({ ...prev, painScore: Number(event.target.value) }))} />
+                </div>
+              </div>
+              <div>
+                <Label>Observations</Label>
+                <Textarea placeholder="Any clinical observations..." value={roundForm.notes} onChange={(event) => setRoundForm((prev) => ({ ...prev, notes: event.target.value }))} />
+              </div>
+              <Button className="w-full" onClick={handleSaveRound}>Save Vitals</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -85,7 +193,7 @@ export default function NurseVitals() {
         <TabsContent value="vitals" className="mt-4 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search patient..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search patient, ward, or UHID..." value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" />
           </div>
           <Card className="border-border">
             <CardContent className="p-0">
@@ -93,10 +201,10 @@ export default function NurseVitals() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Patient</TableHead>
-                    <TableHead>Bed</TableHead>
+                    <TableHead>Ward / Bed</TableHead>
+                    <TableHead>Nurse</TableHead>
                     <TableHead>BP</TableHead>
                     <TableHead>Pulse</TableHead>
-                    <TableHead>RR</TableHead>
                     <TableHead>Temp</TableHead>
                     <TableHead>SpO2</TableHead>
                     <TableHead>Time</TableHead>
@@ -104,20 +212,24 @@ export default function NurseVitals() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredVitals.map(v => (
-                    <TableRow key={v.id}>
+                  {latestRounds.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">No vital rounds recorded yet.</TableCell>
+                    </TableRow>
+                  ) : latestRounds.map((round) => (
+                    <TableRow key={round.id}>
                       <TableCell>
-                        <p className="font-medium text-sm text-foreground">{v.patient}</p>
-                        <p className="text-xs text-muted-foreground">{v.uhid}</p>
+                        <p className="font-medium text-sm text-foreground">{round.patientName}</p>
+                        <p className="text-xs text-muted-foreground">{round.uhid}</p>
                       </TableCell>
-                      <TableCell className="text-sm">{v.bed}</TableCell>
-                      <TableCell className="text-sm font-mono">{v.bp}</TableCell>
-                      <TableCell className="text-sm font-mono">{v.pulse}</TableCell>
-                      <TableCell className="text-sm font-mono">{v.rr}</TableCell>
-                      <TableCell className="text-sm font-mono">{v.temp}°F</TableCell>
-                      <TableCell className={`text-sm font-mono ${v.spo2 < 94 ? 'text-destructive font-bold' : ''}`}>{v.spo2}%</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{v.time}</TableCell>
-                      <TableCell>{v.flag && <Badge variant="destructive" className="text-xs">{v.flag}</Badge>}</TableCell>
+                      <TableCell className="text-sm">{round.ward} · {round.bed}</TableCell>
+                      <TableCell className="text-sm">{round.nurse}</TableCell>
+                      <TableCell className="text-sm font-mono">{round.bp}</TableCell>
+                      <TableCell className="text-sm font-mono">{round.pulse}</TableCell>
+                      <TableCell className="text-sm font-mono">{round.temp}°F</TableCell>
+                      <TableCell className={`text-sm font-mono ${round.spo2 < 94 ? "text-destructive font-bold" : ""}`}>{round.spo2}%</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{round.recordedAt}</TableCell>
+                      <TableCell>{round.spo2 < 94 && <Badge variant="destructive" className="text-xs">SpO2 low</Badge>}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -128,8 +240,8 @@ export default function NurseVitals() {
 
         <TabsContent value="io" className="mt-4 space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">Fluid intake and output tracking</p>
-            <Button size="sm" variant="outline">+ Record I/O</Button>
+            <p className="text-sm text-muted-foreground">Fluid intake and output tracking derived from live rounds</p>
+            <Button size="sm" variant="outline" onClick={() => setSelectedAdmissionId(activeAdmissions[0]?.id ?? "")}>+ Record I/O</Button>
           </div>
           <Card className="border-border">
             <CardContent className="p-0">
@@ -148,10 +260,14 @@ export default function NurseVitals() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {IO_RECORDS.map(io => (
+                  {ioRows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">No I/O entries available.</TableCell>
+                    </TableRow>
+                  ) : ioRows.map((io) => (
                     <TableRow key={io.id}>
                       <TableCell>
-                        <p className="font-medium text-sm text-foreground">{io.patient}</p>
+                        <p className="font-medium text-sm text-foreground">{io.patientName}</p>
                         <p className="text-xs text-muted-foreground">{io.uhid}</p>
                       </TableCell>
                       <TableCell className="text-sm">{io.bed}</TableCell>
@@ -161,7 +277,7 @@ export default function NurseVitals() {
                       <TableCell className="text-sm font-mono">{io.outputUrine}</TableCell>
                       <TableCell className="text-sm font-mono">{io.outputDrain}</TableCell>
                       <TableCell className="text-sm font-mono font-bold">{io.balance}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{io.time}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{io.recordedAt}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -172,21 +288,23 @@ export default function NurseVitals() {
 
         <TabsContent value="pain" className="mt-4 space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">Pain assessment records (0-10 scale)</p>
-            <Button size="sm" variant="outline">+ Assess Pain</Button>
+            <p className="text-sm text-muted-foreground">Pain assessment records linked to live nursing rounds</p>
+            <Button size="sm" variant="outline" onClick={() => setSelectedAdmissionId(activeAdmissions[0]?.id ?? "")}>+ Assess Pain</Button>
           </div>
           <div className="space-y-2">
-            {PAIN_ASSESSMENTS.map(pa => (
-              <Card key={pa.id} className="border-border">
+            {painRows.length === 0 ? (
+              <Card className="border-border"><CardContent className="p-6 text-sm text-muted-foreground">No pain assessments captured yet.</CardContent></Card>
+            ) : painRows.map((round) => (
+              <Card key={round.id} className="border-border">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="flex flex-col items-center min-w-[50px]">
-                    <Badge variant={painColor(pa.score)} className="text-lg w-10 h-10 rounded-full flex items-center justify-center">{pa.score}</Badge>
+                    <Badge variant={painColor(round.painScore)} className="text-lg w-10 h-10 rounded-full flex items-center justify-center">{round.painScore}</Badge>
                     <span className="text-[10px] text-muted-foreground mt-1">/10</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{pa.patient} <span className="text-muted-foreground font-normal">· {pa.uhid}</span></p>
-                    <p className="text-sm text-foreground">{pa.location}: {pa.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{pa.time}</p>
+                    <p className="text-sm font-medium text-foreground">{round.patientName} <span className="text-muted-foreground font-normal">· {round.uhid}</span></p>
+                    <p className="text-sm text-foreground">{round.ward} · {round.bed} · {round.notes}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{round.recordedAt} · {round.nurse}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -197,18 +315,13 @@ export default function NurseVitals() {
         <TabsContent value="fallrisk" className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">Morse Fall Scale assessment for admitted patients</p>
           <div className="space-y-2">
-            {[
-              { patient: "Ramesh Kumar", uhid: "UH-2024-0012", bed: "ICU-03", risk: "High", score: 65, measures: "Bed rails up, call bell within reach, non-slip socks", date: "2025-03-08" },
-              { patient: "Suresh Patel", uhid: "UH-2024-0078", bed: "W2-08", risk: "High", score: 55, measures: "Assisted mobility only, walker provided, bed alarm active", date: "2025-03-08" },
-              { patient: "Meena Devi", uhid: "UH-2024-0091", bed: "W3-02", risk: "Moderate", score: 35, measures: "Non-slip footwear, assisted to bathroom", date: "2025-03-08" },
-              { patient: "Anita Sharma", uhid: "UH-2024-0045", bed: "W2-05", risk: "Low", score: 15, measures: "Standard precautions", date: "2025-03-08" },
-            ].map(fr => (
-              <Card key={fr.uhid} className="border-border">
+            {fallRiskRows.map((row) => (
+              <Card key={row.admission.id} className="border-border">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <Badge variant={fr.risk === "High" ? "destructive" : fr.risk === "Moderate" ? "secondary" : "outline"} className="min-w-[70px] justify-center">{fr.risk}</Badge>
+                  <Badge variant={row.risk === "High" ? "destructive" : row.risk === "Moderate" ? "secondary" : "outline"} className="min-w-[70px] justify-center">{row.risk}</Badge>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{fr.patient} <span className="text-muted-foreground font-normal">· {fr.uhid} · {fr.bed}</span></p>
-                    <p className="text-xs text-muted-foreground">Morse Score: {fr.score} · {fr.measures}</p>
+                    <p className="text-sm font-medium text-foreground">{row.admission.patientName} <span className="text-muted-foreground font-normal">· {row.admission.uhid} · {row.admission.ward}</span></p>
+                    <p className="text-xs text-muted-foreground">Morse Score: {row.score} · {row.measures}</p>
                   </div>
                   <Button size="sm" variant="outline" className="text-xs h-7">Reassess</Button>
                 </CardContent>

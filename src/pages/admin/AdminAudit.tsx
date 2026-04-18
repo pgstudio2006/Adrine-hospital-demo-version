@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Shield, AlertTriangle, Eye, Download } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useHospital } from '@/stores/hospitalStore';
 
 const AUDIT_LOGS = [
   { id: 'LOG001', timestamp: '2025-03-08 14:32:15', user: 'Dr. Rajesh Mehta', userId: 'S001', action: 'View Patient Record', module: 'Doctor', target: 'UHID-1001', ip: '192.168.1.45', device: 'Chrome / Windows', severity: 'info' },
@@ -18,15 +19,45 @@ const AUDIT_LOGS = [
 ];
 
 export default function AdminAudit() {
+  const { workflowEvents } = useHospital();
   const [search, setSearch] = useState('');
   const [moduleFilter, setModuleFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
 
-  const filtered = AUDIT_LOGS.filter(l =>
+  const combinedLogs = useMemo(() => {
+    const liveLogs = workflowEvents.map(event => {
+      const severity =
+        /critical|icu|mlc|emergency/.test(`${event.action} ${event.details}`.toLowerCase())
+          ? 'critical'
+          : /warning|overdue|partial/.test(`${event.action} ${event.details}`.toLowerCase())
+            ? 'warning'
+            : 'info';
+
+      return {
+        id: event.id,
+        timestamp: event.timestamp,
+        user: `${event.module.toUpperCase()} Service`,
+        userId: event.module,
+        action: event.action.replaceAll('_', ' '),
+        module: event.module.charAt(0).toUpperCase() + event.module.slice(1),
+        target: event.refId || event.uhid || 'System event',
+        ip: 'internal-bus',
+        device: 'Workflow Engine',
+        severity,
+      };
+    });
+
+    return [...liveLogs, ...AUDIT_LOGS];
+  }, [workflowEvents]);
+
+  const filtered = combinedLogs.filter(l =>
     (search === '' || l.user.toLowerCase().includes(search.toLowerCase()) || l.action.toLowerCase().includes(search.toLowerCase())) &&
     (moduleFilter === 'all' || l.module === moduleFilter) &&
     (severityFilter === 'all' || l.severity === severityFilter)
   );
+
+  const warningCount = combinedLogs.filter(item => item.severity === 'warning').length;
+  const criticalCount = combinedLogs.filter(item => item.severity === 'critical').length;
 
   return (
     <div className="space-y-6">
@@ -41,15 +72,15 @@ export default function AdminAudit() {
       <div className="grid grid-cols-3 gap-4">
         <Card><CardContent className="p-4 flex items-center gap-3">
           <Eye className="h-5 w-5 text-primary" />
-          <div><p className="text-2xl font-bold">2,847</p><p className="text-xs text-muted-foreground">Today's Actions</p></div>
+          <div><p className="text-2xl font-bold">{combinedLogs.length.toLocaleString('en-IN')}</p><p className="text-xs text-muted-foreground">Tracked Workflow Actions</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
-          <div><p className="text-2xl font-bold">12</p><p className="text-xs text-muted-foreground">Warnings</p></div>
+          <div><p className="text-2xl font-bold">{warningCount}</p><p className="text-xs text-muted-foreground">Warnings</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <Shield className="h-5 w-5 text-destructive" />
-          <div><p className="text-2xl font-bold">3</p><p className="text-xs text-muted-foreground">Critical Alerts</p></div>
+          <div><p className="text-2xl font-bold">{criticalCount}</p><p className="text-xs text-muted-foreground">Critical Alerts</p></div>
         </CardContent></Card>
       </div>
 
@@ -62,7 +93,7 @@ export default function AdminAudit() {
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Modules</SelectItem>
-            {['Admin', 'Auth', 'Billing', 'Doctor', 'Lab', 'Nurse', 'Reception'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            {Array.from(new Set(combinedLogs.map(log => log.module))).sort((left, right) => left.localeCompare(right)).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={severityFilter} onValueChange={setSeverityFilter}>

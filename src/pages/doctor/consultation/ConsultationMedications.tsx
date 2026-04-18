@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pill, X, AlertTriangle, Copy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { AppSelect } from '@/components/ui/app-select';
+import { useHospital } from '@/stores/hospitalStore';
 
 interface Medication {
   id: string;
@@ -20,7 +22,7 @@ interface Props {
   allergies: string[];
 }
 
-const DRUG_DB = [
+const FALLBACK_DRUG_DB = [
   { name: 'Tab. Paracetamol 500mg', generic: 'Paracetamol', category: 'Analgesic' },
   { name: 'Tab. Metformin 500mg', generic: 'Metformin', category: 'Antidiabetic' },
   { name: 'Tab. Amlodipine 5mg', generic: 'Amlodipine', category: 'Antihypertensive' },
@@ -43,16 +45,35 @@ const INTERACTIONS: Record<string, string[]> = {
 };
 
 export default function ConsultationMedications({ medications, onChange, allergies }: Props) {
+  const { pharmacyInventory } = useHospital();
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [manual, setManual] = useState({ name: '', dosage: '', frequency: 'OD (Once)', duration: '5 days', route: 'Oral', instructions: '', isGeneric: false });
 
-  const filtered = DRUG_DB.filter(d =>
+  const drugDb = useMemo(() => {
+    const fromInventory = pharmacyInventory.map((item) => ({
+      name: item.drug,
+      generic: item.generic,
+      category: item.category,
+      qty: item.qty,
+      price: item.price,
+    }));
+
+    return fromInventory.length > 0
+      ? fromInventory
+      : FALLBACK_DRUG_DB.map((item) => ({ ...item, qty: 9999, price: 0 }));
+  }, [pharmacyInventory]);
+
+  const filtered = drugDb.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase()) || d.generic.toLowerCase().includes(search.toLowerCase())
   );
 
-  const addFromDB = (drug: typeof DRUG_DB[0]) => {
+  const addFromDB = (drug: (typeof drugDb)[number]) => {
+    if (drug.qty <= 0) {
+      return;
+    }
+
     onChange([...medications, {
       id: Date.now().toString(), name: drug.name, dosage: '1 tab',
       frequency: 'OD (Once)', duration: '5 days', route: 'Oral',
@@ -71,7 +92,7 @@ export default function ConsultationMedications({ medications, onChange, allergi
 
   // Check interactions
   const interactions: string[] = [];
-  const medNames = medications.map(m => DRUG_DB.find(d => d.name === m.name)?.generic ?? m.name);
+  const medNames = medications.map(m => drugDb.find(d => d.name === m.name)?.generic ?? m.name);
   medNames.forEach(name => {
     if (INTERACTIONS[name]) {
       INTERACTIONS[name].forEach(conflict => {
@@ -84,7 +105,7 @@ export default function ConsultationMedications({ medications, onChange, allergi
 
   // Check allergy conflicts
   const allergyConflicts = medications.filter(m => {
-    const generic = DRUG_DB.find(d => d.name === m.name)?.generic ?? '';
+    const generic = drugDb.find(d => d.name === m.name)?.generic ?? '';
     return allergies.some(a => generic.toLowerCase().includes(a.toLowerCase()) || m.name.toLowerCase().includes(a.toLowerCase()));
   });
 
@@ -134,10 +155,13 @@ export default function ConsultationMedications({ medications, onChange, allergi
           {showSearch && search && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
               {filtered.map(d => (
-                <button key={d.name} onClick={() => addFromDB(d)}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors">
+                <button key={d.name} onClick={() => addFromDB(d)} disabled={d.qty <= 0}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <span className="font-medium">{d.name}</span>
                   <span className="text-muted-foreground ml-2">({d.generic} · {d.category})</span>
+                  <span className={`ml-2 text-[10px] ${d.qty > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                    {d.qty > 0 ? `In stock: ${d.qty}` : 'Out of stock'}
+                  </span>
                 </button>
               ))}
               {filtered.length === 0 && (
@@ -153,12 +177,18 @@ export default function ConsultationMedications({ medications, onChange, allergi
             <div className="grid grid-cols-2 gap-2">
               <Input placeholder="Drug name *" value={manual.name} onChange={e => setManual({ ...manual, name: e.target.value })} className="h-7 text-xs" />
               <Input placeholder="Dosage" value={manual.dosage} onChange={e => setManual({ ...manual, dosage: e.target.value })} className="h-7 text-xs" />
-              <select value={manual.frequency} onChange={e => setManual({ ...manual, frequency: e.target.value })} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-                {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
-              </select>
-              <select value={manual.route} onChange={e => setManual({ ...manual, route: e.target.value })} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-                {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <AppSelect
+                value={manual.frequency}
+                onValueChange={(value) => setManual({ ...manual, frequency: value })}
+                options={FREQUENCIES.map((frequency) => ({ value: frequency, label: frequency }))}
+                className="h-7 text-xs"
+              />
+              <AppSelect
+                value={manual.route}
+                onValueChange={(value) => setManual({ ...manual, route: value })}
+                options={ROUTES.map((route) => ({ value: route, label: route }))}
+                className="h-7 text-xs"
+              />
               <Input placeholder="Duration" value={manual.duration} onChange={e => setManual({ ...manual, duration: e.target.value })} className="h-7 text-xs" />
               <Input placeholder="Instructions" value={manual.instructions} onChange={e => setManual({ ...manual, instructions: e.target.value })} className="h-7 text-xs" />
             </div>
@@ -201,13 +231,27 @@ export default function ConsultationMedications({ medications, onChange, allergi
                 {/* Inline edit */}
                 <div className="grid grid-cols-4 gap-1.5 mt-2">
                   <Input value={med.dosage} onChange={e => { const updated = [...medications]; updated[idx] = { ...med, dosage: e.target.value }; onChange(updated); }} className="h-6 text-[10px]" placeholder="Dosage" />
-                  <select value={med.frequency} onChange={e => { const updated = [...medications]; updated[idx] = { ...med, frequency: e.target.value }; onChange(updated); }} className="h-6 text-[10px] border rounded px-1 bg-background">
-                    {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
+                  <AppSelect
+                    value={med.frequency}
+                    onValueChange={(value) => {
+                      const updated = [...medications];
+                      updated[idx] = { ...med, frequency: value };
+                      onChange(updated);
+                    }}
+                    options={FREQUENCIES.map((frequency) => ({ value: frequency, label: frequency }))}
+                    className="h-6 text-[10px]"
+                  />
                   <Input value={med.duration} onChange={e => { const updated = [...medications]; updated[idx] = { ...med, duration: e.target.value }; onChange(updated); }} className="h-6 text-[10px]" placeholder="Duration" />
-                  <select value={med.route} onChange={e => { const updated = [...medications]; updated[idx] = { ...med, route: e.target.value }; onChange(updated); }} className="h-6 text-[10px] border rounded px-1 bg-background">
-                    {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  <AppSelect
+                    value={med.route}
+                    onValueChange={(value) => {
+                      const updated = [...medications];
+                      updated[idx] = { ...med, route: value };
+                      onChange(updated);
+                    }}
+                    options={ROUTES.map((route) => ({ value: route, label: route }))}
+                    className="h-6 text-[10px]"
+                  />
                 </div>
               </div>
             ))}

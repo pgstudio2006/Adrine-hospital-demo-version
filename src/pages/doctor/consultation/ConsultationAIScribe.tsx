@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { AppSelect } from '@/components/ui/app-select';
 import { toast } from 'sonner';
 import {
   Mic, MicOff, Sparkles, Loader2, CheckCircle2, XCircle,
@@ -300,16 +301,13 @@ Rules:
               <label className="text-xs font-medium text-muted-foreground mb-1 block flex items-center gap-1">
                 <Languages className="w-3.5 h-3.5" /> Conversation Language
               </label>
-              <select
+              <AppSelect
                 value={language}
-                onChange={e => setLanguage(e.target.value)}
+                onValueChange={setLanguage}
                 disabled={isListening}
-                className="w-full h-8 text-xs border rounded-md px-2 bg-background"
-              >
-                {LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
-              </select>
+                options={LANGUAGES.map((lang) => ({ value: lang.code, label: lang.label }))}
+                className="w-full h-8 text-xs"
+              />
             </div>
 
             {/* Recording controls */}

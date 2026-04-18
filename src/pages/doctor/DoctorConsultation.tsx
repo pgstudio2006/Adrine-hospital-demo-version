@@ -9,11 +9,12 @@ import ConsultationDiagnosis, { type Diagnosis } from './consultation/Consultati
 import ConsultationExamination, { type ExamFindings } from './consultation/ConsultationExamination';
 import ConsultationOrders, { type LabTest, type RadiologyOrder, type ProcedureOrder } from './consultation/ConsultationOrders';
 import ConsultationMedications, { type Medication } from './consultation/ConsultationMedications';
-import ConsultationRightPanel from './consultation/ConsultationRightPanel';
+import ConsultationRightPanel, { type AdmissionRecommendationPayload } from './consultation/ConsultationRightPanel';
 import PrescriptionPreview from './consultation/PrescriptionPreview';
 import ConsultationAIScribe from './consultation/ConsultationAIScribe';
 import { useHospital } from '@/stores/hospitalStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDoctorScope } from '@/hooks/useDoctorScope';
 
 const fadeIn = (i: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -24,15 +25,17 @@ const fadeIn = (i: number) => ({
 export default function DoctorConsultation() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { patients, saveConsultation } = useHospital();
+  const { saveConsultation, transferOpdToIPD } = useHospital();
   const { user } = useAuth();
+  const { isDoctor, queue, canAccessPatient, getPatient } = useDoctorScope();
 
-  // Look up patient from store
-  const patient = patients.find(p => p.uhid === patientId);
-  const patientName = patient?.name ?? 'Patient';
+  const patient = patientId ? getPatient(patientId) : undefined;
+  const queueEntry = queue.find((entry) => entry.uhid === patientId);
+  const hasAccess = !!patientId && canAccessPatient(patientId);
+  const patientName = patient?.name ?? queueEntry?.patientName ?? 'Patient';
   const patientInfo = patient 
     ? `${patient.age}y / ${patient.gender}  •  UHID: ${patient.uhid}  •  ${patient.phone}`
-    : `UHID: ${patientId}`;
+    : `UHID: ${patientId ?? 'Unknown'}`;
   const patientAllergies = patient?.allergies ? patient.allergies.split(',').map(a => a.trim()) : [];
 
   // Vitals
@@ -55,6 +58,18 @@ export default function DoctorConsultation() {
   const [showPreview, setShowPreview] = useState(false);
   const [showAIScribe, setShowAIScribe] = useState(false);
 
+  if (!isDoctor || !patientId || !hasAccess) {
+    return (
+      <div className="rounded-xl border bg-card p-6 space-y-3">
+        <h1 className="text-lg font-semibold">Consultation Access Restricted</h1>
+        <p className="text-sm text-muted-foreground">
+          You can only open consultations for patients assigned to your doctor profile and department.
+        </p>
+        <Button size="sm" onClick={() => navigate('/doctor/queue')}>Back to OPD Queue</Button>
+      </div>
+    );
+  }
+
   const handleAIScribeApply = (result: any) => {
     if (result.complaints.length > 0) setComplaints(result.complaints);
     if (result.diagnoses.length > 0) setDiagnoses(result.diagnoses);
@@ -76,11 +91,15 @@ export default function DoctorConsultation() {
   };
 
   const handleSaveConsultation = () => {
+    if (!patientId) {
+      return;
+    }
+
     saveConsultation({
-      uhid: patientId || '',
+      uhid: patientId,
       patientName,
       doctor: user?.name || 'Dr. Doctor',
-      department: patient?.department || 'General Medicine',
+      department: patient?.department || queueEntry?.department || user?.department || 'General Medicine',
       labTests: labTests.map(t => ({ tests: t.text, category: 'General', priority: t.priority === 'stat' ? 'Emergency' as const : t.priority === 'urgent' ? 'Urgent' as const : 'Routine' as const })),
       medications: medications.map(m => ({
         drug: m.name,
@@ -98,6 +117,26 @@ export default function DoctorConsultation() {
       consultationFee: 800,
     });
     navigate(-1);
+  };
+
+  const handleRecommendAdmission = (payload: AdmissionRecommendationPayload) => {
+    if (!patientId) {
+      return;
+    }
+
+    const result = transferOpdToIPD({
+      uhid: patientId,
+      patientName,
+      attendingDoctor: user?.name || 'Doctor On Call',
+      department: payload.department || patient?.department || queueEntry?.department || user?.department || 'General Medicine',
+      reason: payload.reason || diagnoses[0]?.text || complaints[0]?.text || 'Inpatient observation advised',
+      bedType: payload.bedType,
+      priority: payload.priority,
+      journeyType: payload.journeyType,
+      requestedBy: user?.name || 'Doctor',
+    });
+
+    navigate(`/doctor/ipd/${result.admissionId}`);
   };
 
   return (
@@ -189,6 +228,7 @@ export default function DoctorConsultation() {
             treatmentPlan={treatmentPlan} onTreatmentPlanChange={setTreatmentPlan}
             onSave={handleSaveConsultation} onDraft={() => {}}
             onPreview={() => setShowPreview(true)}
+            onRecommendAdmission={handleRecommendAdmission}
           />
         </motion.div>
       </div>

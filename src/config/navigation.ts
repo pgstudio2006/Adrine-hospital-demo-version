@@ -31,4 +31,5 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'insurance', label: 'Insurance & TPA', icon: ShieldCheck, path: '/insurance', group: 'Finance' },
   { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports', group: 'Admin' },
   { key: 'settings', label: 'Settings', icon: Settings, path: '/settings', group: 'Admin' },
+  { key: 'crm', label: 'CRM & Growth', icon: TrendingUp, path: '/crm', group: 'Growth' },
 ];

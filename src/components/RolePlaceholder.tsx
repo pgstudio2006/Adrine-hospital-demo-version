@@ -9,18 +9,19 @@ interface RolePlaceholderProps {
 export default function RolePlaceholder({ title, subtitle }: RolePlaceholderProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0)' }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="flex flex-col items-center justify-center min-h-[60vh] text-center"
     >
-      <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-4">
-        <Construction className="w-7 h-7 text-muted-foreground" />
+      <div className="w-16 h-16 rounded-2xl bg-foreground flex items-center justify-center mb-6 shadow-sm">
+        <Construction className="w-8 h-8 text-background" />
       </div>
-      <h1 className="text-xl font-bold tracking-tight mb-1">{title}</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">{title}</h1>
       <p className="text-sm text-muted-foreground max-w-md">
-        {subtitle ?? 'This module is being built with full detail.'}
+        {subtitle ?? 'This module is currently under construction.'}
       </p>
-      <div className="mt-6 px-4 py-2 rounded-md bg-muted text-xs text-muted-foreground font-medium">
+      <div className="mt-8 px-5 py-2 rounded-full border border-border bg-background text-xs text-foreground font-medium uppercase tracking-widest">
         Coming soon
       </div>
     </motion.div>

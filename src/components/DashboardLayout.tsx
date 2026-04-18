@@ -90,20 +90,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <SidebarFooter className="p-3">
           <Separator className="mb-3" />
-          <div className="flex items-center gap-2 px-1 group-data-[collapsible=icon]:justify-center">
-            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
+          <div className="flex items-center gap-3 px-2 py-1 group-data-[collapsible=icon]:justify-center hover:bg-accent rounded-md transition-colors cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-[10px] font-medium tracking-wider text-background">
               {user?.name?.charAt(0) ?? '?'}
             </div>
             <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="text-xs font-medium truncate">{user?.name}</p>
-              <p className="text-[10px] text-muted-foreground">{user ? ROLE_LABELS[user.role] : ''}</p>
+              <p className="text-sm font-medium tracking-tight truncate">{user?.name}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{user ? ROLE_LABELS[user.role] : ''}</p>
             </div>
             <button
               onClick={() => { logout(); navigate('/'); }}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors group-data-[collapsible=icon]:hidden"
+              className="p-1.5 rounded-full hover:bg-background transition-colors group-data-[collapsible=icon]:hidden text-muted-foreground hover:text-foreground"
               title="Logout"
             >
-              <LogOut className="w-3.5 h-3.5 text-muted-foreground" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </SidebarFooter>
@@ -111,23 +111,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <SidebarInset>
         {/* Top Bar */}
-        <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-5" />
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="text-muted-foreground">{currentPage?.group}</span>
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border/40 bg-background/70 backdrop-blur-xl px-6 supports-[backdrop-filter]:bg-background/60">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+          <Separator orientation="vertical" className="h-4 bg-border/60" />
+          <div className="flex items-center gap-2 text-sm pt-[2px]">
+            <span className="text-muted-foreground font-bold tracking-widest text-[10px] uppercase">{currentPage?.group}</span>
             {currentPage && (
               <>
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                <span className="font-medium">{currentPage.label}</span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground/60" strokeWidth={3} />
+                <span className="font-bold tracking-tight text-foreground/90">{currentPage.label}</span>
               </>
             )}
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-6">
-          {children}
+        <div className="flex-1 p-8">
+          <div className="mx-auto max-w-6xl animate-fade-in">
+            {children}
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

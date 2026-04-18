@@ -1,12 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHospital } from '@/stores/hospitalStore';
+import { RegistrationJourneyType } from '@/config/tenantSettings';
 import {
   Search, UserPlus, Phone, CreditCard, Shield, ChevronRight, X, Check, User, FileText,
   AlertTriangle, Upload, Heart, MapPin, Camera, Scale, Merge, GitMerge,
   Building2, BadgeCheck, Globe, Eye, History
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { AppSelect } from '@/components/ui/app-select';
+import { useTenantSettings } from '@/hooks/useTenantSettings';
 
 // ── Types ──
 interface Patient {
@@ -20,7 +24,7 @@ interface Patient {
   registeredOn: string;
   lastVisit?: string;
   lastDoctor?: string;
-  patientType: 'OPD' | 'IPD' | 'Emergency';
+  patientType: 'OPD' | 'IPD' | 'Emergency' | 'Maternity' | 'Newborn' | 'ICU' | 'Surgery' | 'Dialysis' | 'Trauma';
   category: 'general' | 'corporate' | 'insurance' | 'government' | 'vip';
   bloodGroup?: string;
   referralSource?: string;
@@ -57,7 +61,6 @@ const STEPS = [
   { label: 'Review & Confirm', icon: FileText },
 ];
 
-const DEPARTMENTS = ['General Medicine', 'Cardiology', 'Orthopedics', 'Gynecology', 'Pediatrics', 'Dermatology', 'ENT', 'Neurology', 'Ophthalmology', 'Urology'];
 const DOCTORS = ['Dr. R. Mehta', 'Dr. S. Iyer', 'Dr. A. Shah', 'Dr. K. Rao', 'Dr. P. Nair', 'Dr. V. Reddy'];
 const BRANCHES = ['Main Hospital', 'City Branch', 'North Wing', 'South Campus'];
 
@@ -75,21 +78,32 @@ const validateAadhaar = (aadhaar: string) => /^\d{4}\s?\d{4}\s?\d{4}$/.test(aadh
 const validateABHA = (abha: string) => /^\d{2}-\d{4}-\d{4}-\d{4}$/.test(abha);
 
 export default function ReceptionRegistration() {
-  const { patients: storePatients, registerPatient } = useHospital();
+  const { patients: storePatients, startFrontDeskVisit, createEmergencyCase } = useHospital();
+  const { settings } = useTenantSettings();
+  const defaultPatientType = settings.registration.patientTypes[0]?.label ?? 'OPD';
   const [mode, setMode] = useState<'list' | 'new' | 'emergency' | 'merge' | 'abha-lookup'>('list');
   const [search, setSearch] = useState('');
   const [step, setStep] = useState(0);
   const [searchBy, setSearchBy] = useState<'all' | 'uhid' | 'phone' | 'name' | 'aadhaar' | 'abha'>('all');
   const [selectedBranch, setSelectedBranch] = useState('Main Hospital');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [demoResult, setDemoResult] = useState<null | {
+    patientName: string;
+    uhid: string;
+    appointmentId: string | null;
+    tokenNo: number | null;
+    invoiceId: string | null;
+    admissionId: string | null;
+  }>(null);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', dob: '', gender: 'male', nationality: 'Indian',
     phone: '', altPhone: '', email: '', address: '', city: '', state: '', pin: '',
     emergencyContact: '', emergencyPhone: '', emergencyRelation: '',
+    guardianName: '', guardianPhone: '', guardianRelation: '',
     bloodGroup: '', allergies: '', chronicDiseases: '', disabilityStatus: 'none',
-    patientType: 'OPD' as 'OPD' | 'IPD' | 'Emergency',
+    patientType: defaultPatientType,
     category: 'general' as 'general' | 'corporate' | 'insurance' | 'government' | 'vip',
     // Government schemes
     govScheme: '', schemeId: '', schemeEligibility: '', authorizationNo: '',
@@ -112,11 +126,40 @@ export default function ReceptionRegistration() {
     documents: [] as { name: string; type: string }[],
   });
 
+  const selectedPatientType = useMemo(
+    () => settings.registration.patientTypes.find((item) => item.label === formData.patientType),
+    [settings.registration.patientTypes, formData.patientType],
+  );
+  const selectedJourneyType: RegistrationJourneyType = selectedPatientType?.journeyType ?? 'OPD';
+  const isEmergencyJourney = selectedJourneyType === 'Emergency' || selectedJourneyType === 'Trauma';
+  const isAdmissionJourney = selectedJourneyType === 'IPD' || selectedJourneyType === 'ICU' || selectedJourneyType === 'Maternity' || selectedJourneyType === 'Surgery' || selectedJourneyType === 'Newborn';
+
+  useEffect(() => {
+    setFormData((current) => {
+      const hasPatientType = settings.registration.patientTypes.some((item) => item.label === current.patientType);
+      const nextPatientType = hasPatientType ? current.patientType : settings.registration.patientTypes[0]?.label ?? 'OPD';
+
+      const hasDepartment = !current.department || settings.registration.departments.includes(current.department);
+      const nextDepartment = hasDepartment ? current.department : '';
+
+      if (nextPatientType === current.patientType && nextDepartment === current.department) {
+        return current;
+      }
+
+      return {
+        ...current,
+        patientType: nextPatientType,
+        department: nextDepartment,
+      };
+    });
+  }, [settings.registration.patientTypes, settings.registration.departments]);
+
   // Emergency quick-form
   const [emergencyForm, setEmergencyForm] = useState({
     name: '', age: '', gender: 'male', emergencyType: '', arrivalMode: 'walk-in',
     triagePriority: 'urgent' as 'immediate' | 'urgent' | 'delayed',
-    assignedDoctor: '', notes: '', isMLC: false, mlcPoliceCase: '',
+    phone: '', guardianName: '', guardianPhone: '', emergencyContactName: '', emergencyContactPhone: '',
+    assignedDoctor: '', notes: '', isMLC: false, mlcPoliceCase: '', mlcReportingAuthority: '',
   });
 
   // ABHA lookup
@@ -138,11 +181,15 @@ export default function ReceptionRegistration() {
       if (!formData.firstName.trim()) errors.firstName = 'First name is required';
       if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
       if (!formData.dob) errors.dob = 'Date of birth is required';
+      if (!formData.patientType.trim()) errors.patientType = 'Patient type is required';
     }
     if (stepIdx === 1) {
       if (!formData.phone.trim()) errors.phone = 'Phone number is required';
       else if (!validatePhone(formData.phone)) errors.phone = 'Invalid phone format (10 digits, starting 6-9)';
       if (formData.altPhone && !validatePhone(formData.altPhone)) errors.altPhone = 'Invalid phone format';
+    }
+    if (stepIdx === 3) {
+      if (!formData.department.trim()) errors.department = 'Select department to route the patient';
     }
     if (stepIdx === 4) {
       if (formData.aadhaar && !validateAadhaar(formData.aadhaar)) errors.aadhaar = 'Invalid Aadhaar format (12 digits)';
@@ -384,21 +431,53 @@ export default function ReceptionRegistration() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Patient Phone</label>
+              <input value={emergencyForm.phone} onChange={e => setEmergencyForm(f => ({ ...f, phone: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="10-digit mobile" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Guardian Name</label>
+              <input value={emergencyForm.guardianName} onChange={e => setEmergencyForm(f => ({ ...f, guardianName: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Guardian / attendant" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Guardian Phone</label>
+              <input value={emergencyForm.guardianPhone} onChange={e => setEmergencyForm(f => ({ ...f, guardianPhone: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Guardian contact" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Emergency Contact Name</label>
+              <input value={emergencyForm.emergencyContactName} onChange={e => setEmergencyForm(f => ({ ...f, emergencyContactName: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Emergency contact" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Emergency Contact Phone</label>
+              <input value={emergencyForm.emergencyContactPhone} onChange={e => setEmergencyForm(f => ({ ...f, emergencyContactPhone: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Emergency phone" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Emergency Type *</label>
-              <select value={emergencyForm.emergencyType} onChange={e => setEmergencyForm(f => ({ ...f, emergencyType: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                <option value="">Select type</option>
-                <option value="trauma">Trauma / Accident</option>
-                <option value="cardiac">Cardiac Emergency</option>
-                <option value="respiratory">Respiratory Distress</option>
-                <option value="neurological">Neurological</option>
-                <option value="poisoning">Poisoning</option>
-                <option value="burns">Burns</option>
-                <option value="obstetric">Obstetric Emergency</option>
-                <option value="other">Other</option>
-              </select>
+              <AppSelect
+                value={emergencyForm.emergencyType}
+                onValueChange={(value) => setEmergencyForm((prev) => ({ ...prev, emergencyType: value }))}
+                options={[
+                  { value: '', label: 'Select type' },
+                  { value: 'trauma', label: 'Trauma / Accident' },
+                  { value: 'cardiac', label: 'Cardiac Emergency' },
+                  { value: 'respiratory', label: 'Respiratory Distress' },
+                  { value: 'neurological', label: 'Neurological' },
+                  { value: 'poisoning', label: 'Poisoning' },
+                  { value: 'burns', label: 'Burns' },
+                  { value: 'obstetric', label: 'Obstetric Emergency' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Mode of Arrival</label>
@@ -431,11 +510,15 @@ export default function ReceptionRegistration() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Assigned Doctor</label>
-              <select value={emergencyForm.assignedDoctor} onChange={e => setEmergencyForm(f => ({ ...f, assignedDoctor: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                <option value="">Auto-assign</option>
-                {DOCTORS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <AppSelect
+                value={emergencyForm.assignedDoctor}
+                onValueChange={(value) => setEmergencyForm((prev) => ({ ...prev, assignedDoctor: value }))}
+                options={[
+                  { value: '', label: 'Auto-assign' },
+                  ...DOCTORS.map((doctor) => ({ value: doctor, label: doctor })),
+                ]}
+                className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+              />
             </div>
           </div>
 
@@ -455,7 +538,8 @@ export default function ReceptionRegistration() {
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Reporting Authority</label>
-                  <input className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Police station / Authority" />
+                  <input value={emergencyForm.mlcReportingAuthority} onChange={e => setEmergencyForm(f => ({ ...f, mlcReportingAuthority: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="Police station / Authority" />
                 </div>
               </div>
             )}
@@ -470,7 +554,56 @@ export default function ReceptionRegistration() {
 
         <div className="flex justify-between">
           <button onClick={() => setMode('list')} className="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent">Cancel</button>
-          <button onClick={() => setMode('list')}
+          <button onClick={() => {
+            if (!emergencyForm.name.trim() || !emergencyForm.age.trim() || !emergencyForm.emergencyType.trim()) {
+              toast.error('Please complete required emergency fields (name, age, type).');
+              return;
+            }
+
+            const arrivalMode = emergencyForm.arrivalMode === 'ambulance'
+              ? 'Ambulance'
+              : emergencyForm.arrivalMode === 'referred'
+                ? 'Referral'
+                : 'Walk-in';
+
+            createEmergencyCase({
+              patientName: emergencyForm.name.trim(),
+              age: Number(emergencyForm.age),
+              gender: emergencyForm.gender,
+              phone: emergencyForm.phone || undefined,
+              guardianName: emergencyForm.guardianName || undefined,
+              guardianPhone: emergencyForm.guardianPhone || undefined,
+              emergencyContactName: emergencyForm.emergencyContactName || undefined,
+              emergencyContactPhone: emergencyForm.emergencyContactPhone || undefined,
+              arrivalMode,
+              complaint: emergencyForm.emergencyType,
+              vitals: `Priority ${emergencyForm.triagePriority.toUpperCase()} · Notes: ${emergencyForm.notes || 'None'}`,
+              mlcRequired: emergencyForm.isMLC,
+              mlcPoliceCase: emergencyForm.mlcPoliceCase || undefined,
+              mlcReportingAuthority: emergencyForm.mlcReportingAuthority || undefined,
+              mlcIncidentDescription: emergencyForm.notes || undefined,
+            });
+
+            setEmergencyForm({
+              name: '',
+              age: '',
+              gender: 'male',
+              emergencyType: '',
+              arrivalMode: 'walk-in',
+              triagePriority: 'urgent',
+              phone: '',
+              guardianName: '',
+              guardianPhone: '',
+              emergencyContactName: '',
+              emergencyContactPhone: '',
+              assignedDoctor: '',
+              notes: '',
+              isMLC: false,
+              mlcPoliceCase: '',
+              mlcReportingAuthority: '',
+            });
+            setMode('list');
+          }}
             className="px-6 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" /> Register & Notify Emergency Dept
           </button>
@@ -592,20 +725,33 @@ export default function ReceptionRegistration() {
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Patient Type *</label>
-                  <div className="flex gap-2">
-                    {(['OPD', 'IPD', 'Emergency'] as const).map(t => (
-                      <button key={t} onClick={() => updateField('patientType', t)}
-                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${formData.patientType === t ? (t === 'Emergency' ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground') : 'bg-background hover:bg-accent'}`}>
-                        {t}
+                  <div className="grid grid-cols-3 gap-2">
+                    {settings.registration.patientTypes.map((typeOption) => (
+                      <button
+                        key={typeOption.label}
+                        onClick={() => updateField('patientType', typeOption.label)}
+                        className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                          formData.patientType === typeOption.label
+                            ? typeOption.journeyType === 'Emergency' || typeOption.journeyType === 'Trauma'
+                              ? 'bg-destructive text-destructive-foreground'
+                              : 'bg-primary text-primary-foreground'
+                            : 'bg-background hover:bg-accent'
+                        }`}
+                      >
+                        {typeOption.label}
                       </button>
                     ))}
                   </div>
+                  <FieldError field="patientType" />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Branch</label>
-                  <select value={formData.branch} onChange={e => updateField('branch', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
+                  <AppSelect
+                    value={formData.branch}
+                    onValueChange={(value) => updateField('branch', value)}
+                    options={BRANCHES.map((branch) => ({ value: branch, label: branch }))}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
                 </div>
               </div>
               {/* Referral */}
@@ -614,14 +760,19 @@ export default function ReceptionRegistration() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Referral Source</label>
-                    <select value={formData.referralSource} onChange={e => updateField('referralSource', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                      <option value="walk-in">Walk-in</option>
-                      <option value="doctor-referral">Doctor Referral</option>
-                      <option value="hospital-referral">Hospital Referral</option>
-                      <option value="clinic-referral">Clinic Referral</option>
-                      <option value="online">Online Booking</option>
-                      <option value="emergency">Emergency / 108</option>
-                    </select>
+                    <AppSelect
+                      value={formData.referralSource}
+                      onValueChange={(value) => updateField('referralSource', value)}
+                      options={[
+                        { value: 'walk-in', label: 'Walk-in' },
+                        { value: 'doctor-referral', label: 'Doctor Referral' },
+                        { value: 'hospital-referral', label: 'Hospital Referral' },
+                        { value: 'clinic-referral', label: 'Clinic Referral' },
+                        { value: 'online', label: 'Online Booking' },
+                        { value: 'emergency', label: 'Emergency / 108' },
+                      ]}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                    />
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Referring Doctor</label>
@@ -668,24 +819,51 @@ export default function ReceptionRegistration() {
                 <div><label className="text-sm font-medium mb-1 block">City</label><input value={formData.city} onChange={e => updateField('city', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" /></div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">State</label>
-                  <select value={formData.state} onChange={e => updateField('state', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    <option value="">Select</option>
-                    {['Andhra Pradesh', 'Delhi', 'Gujarat', 'Karnataka', 'Kerala', 'Maharashtra', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'West Bengal'].map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <AppSelect
+                    value={formData.state}
+                    onValueChange={(value) => updateField('state', value)}
+                    options={[
+                      { value: '', label: 'Select' },
+                      ...['Andhra Pradesh', 'Delhi', 'Gujarat', 'Karnataka', 'Kerala', 'Maharashtra', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'West Bengal'].map((state) => ({ value: state, label: state })),
+                    ]}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
                 </div>
                 <div><label className="text-sm font-medium mb-1 block">PIN Code</label><input value={formData.pin} onChange={e => updateField('pin', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" placeholder="6 digits" maxLength={6} /></div>
               </div>
               <div className="border-t pt-4 mt-4">
+                <h3 className="text-sm font-semibold mb-3">Guardian Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div><label className="text-sm font-medium mb-1 block">Guardian Name</label><input value={formData.guardianName} onChange={e => updateField('guardianName', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" /></div>
+                  <div><label className="text-sm font-medium mb-1 block">Guardian Phone</label><input value={formData.guardianPhone} onChange={e => updateField('guardianPhone', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" /></div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Guardian Relation</label>
+                    <AppSelect
+                      value={formData.guardianRelation}
+                      onValueChange={(value) => updateField('guardianRelation', value)}
+                      options={[
+                        { value: '', label: 'Select' },
+                        ...['Spouse', 'Parent', 'Sibling', 'Child', 'Other'].map((relation) => ({ value: relation, label: relation })),
+                      ]}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                    />
+                  </div>
+                </div>
                 <h3 className="text-sm font-semibold mb-3">Emergency Contact</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div><label className="text-sm font-medium mb-1 block">Name</label><input value={formData.emergencyContact} onChange={e => updateField('emergencyContact', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" /></div>
                   <div><label className="text-sm font-medium mb-1 block">Phone</label><input value={formData.emergencyPhone} onChange={e => updateField('emergencyPhone', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm" /></div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Relation</label>
-                    <select value={formData.emergencyRelation} onChange={e => updateField('emergencyRelation', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                      <option value="">Select</option>
-                      {['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Other'].map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
+                    <AppSelect
+                      value={formData.emergencyRelation}
+                      onValueChange={(value) => updateField('emergencyRelation', value)}
+                      options={[
+                        { value: '', label: 'Select' },
+                        ...['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Other'].map((relation) => ({ value: relation, label: relation })),
+                      ]}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                    />
                   </div>
                 </div>
               </div>
@@ -716,16 +894,21 @@ export default function ReceptionRegistration() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1 block">Scheme *</label>
-                      <select value={formData.govScheme} onChange={e => updateField('govScheme', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                        <option value="">Select scheme</option>
-                        <option value="ayushman">Ayushman Bharat (PMJAY)</option>
-                        <option value="esi">ESI</option>
-                        <option value="cghs">CGHS</option>
-                        <option value="aarogyasri">Aarogyasri (Telangana)</option>
-                        <option value="mahatma-jyotiba">Mahatma Jyotiba Phule (Maharashtra)</option>
-                        <option value="chief-minister">Chief Minister's Insurance</option>
-                        <option value="other">Other State Scheme</option>
-                      </select>
+                      <AppSelect
+                        value={formData.govScheme}
+                        onValueChange={(value) => updateField('govScheme', value)}
+                        options={[
+                          { value: '', label: 'Select scheme' },
+                          { value: 'ayushman', label: 'Ayushman Bharat (PMJAY)' },
+                          { value: 'esi', label: 'ESI' },
+                          { value: 'cghs', label: 'CGHS' },
+                          { value: 'aarogyasri', label: 'Aarogyasri (Telangana)' },
+                          { value: 'mahatma-jyotiba', label: 'Mahatma Jyotiba Phule (Maharashtra)' },
+                          { value: 'chief-minister', label: "Chief Minister's Insurance" },
+                          { value: 'other', label: 'Other State Scheme' },
+                        ]}
+                        className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">Scheme ID / Card No.</label>
@@ -733,12 +916,17 @@ export default function ReceptionRegistration() {
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">Eligibility Status</label>
-                      <select value={formData.schemeEligibility} onChange={e => updateField('schemeEligibility', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                        <option value="">Pending verification</option>
-                        <option value="eligible">Eligible</option>
-                        <option value="not-eligible">Not Eligible</option>
-                        <option value="expired">Expired</option>
-                      </select>
+                      <AppSelect
+                        value={formData.schemeEligibility}
+                        onValueChange={(value) => updateField('schemeEligibility', value)}
+                        options={[
+                          { value: '', label: 'Pending verification' },
+                          { value: 'eligible', label: 'Eligible' },
+                          { value: 'not-eligible', label: 'Not Eligible' },
+                          { value: 'expired', label: 'Expired' },
+                        ]}
+                        className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">Authorization Number</label>
@@ -759,15 +947,20 @@ export default function ReceptionRegistration() {
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">TPA Provider</label>
-                      <select value={formData.tpaProvider} onChange={e => updateField('tpaProvider', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                        <option value="">Select TPA</option>
-                        <option value="medi-assist">Medi Assist</option>
-                        <option value="paramount">Paramount Health</option>
-                        <option value="heritage">Heritage Health</option>
-                        <option value="vidal">Vidal Health</option>
-                        <option value="raksha">Raksha TPA</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <AppSelect
+                        value={formData.tpaProvider}
+                        onValueChange={(value) => updateField('tpaProvider', value)}
+                        options={[
+                          { value: '', label: 'Select TPA' },
+                          { value: 'medi-assist', label: 'Medi Assist' },
+                          { value: 'paramount', label: 'Paramount Health' },
+                          { value: 'heritage', label: 'Heritage Health' },
+                          { value: 'vidal', label: 'Vidal Health' },
+                          { value: 'raksha', label: 'Raksha TPA' },
+                          { value: 'other', label: 'Other' },
+                        ]}
+                        className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">TPA Policy No.</label>
@@ -809,28 +1002,44 @@ export default function ReceptionRegistration() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Blood Group</label>
-                  <select value={formData.bloodGroup} onChange={e => updateField('bloodGroup', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    <option value="">Select</option>
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                  </select>
+                  <AppSelect
+                    value={formData.bloodGroup}
+                    onValueChange={(value) => updateField('bloodGroup', value)}
+                    options={[
+                      { value: '', label: 'Select' },
+                      ...['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((group) => ({ value: group, label: group })),
+                    ]}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Disability Status</label>
-                  <select value={formData.disabilityStatus} onChange={e => updateField('disabilityStatus', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    <option value="none">None</option>
-                    <option value="visual">Visual Impairment</option>
-                    <option value="hearing">Hearing Impairment</option>
-                    <option value="locomotor">Locomotor Disability</option>
-                    <option value="intellectual">Intellectual Disability</option>
-                    <option value="multiple">Multiple Disabilities</option>
-                  </select>
+                  <AppSelect
+                    value={formData.disabilityStatus}
+                    onValueChange={(value) => updateField('disabilityStatus', value)}
+                    options={[
+                      { value: 'none', label: 'None' },
+                      { value: 'visual', label: 'Visual Impairment' },
+                      { value: 'hearing', label: 'Hearing Impairment' },
+                      { value: 'locomotor', label: 'Locomotor Disability' },
+                      { value: 'intellectual', label: 'Intellectual Disability' },
+                      { value: 'multiple', label: 'Multiple Disabilities' },
+                    ]}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Department</label>
-                  <select value={formData.department} onChange={e => updateField('department', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    <option value="">Select</option>
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  <label className="text-sm font-medium mb-1 block">Department to Route Patient *</label>
+                  <AppSelect
+                    value={formData.department}
+                    onValueChange={(value) => updateField('department', value)}
+                    options={[
+                      { value: '', label: 'Select department' },
+                      ...settings.registration.departments.map((department) => ({ value: department, label: department })),
+                    ]}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
+                  <FieldError field="department" />
                 </div>
                 <div className="sm:col-span-2 lg:col-span-3">
                   <label className="text-sm font-medium mb-1 block">Known Allergies</label>
@@ -871,13 +1080,18 @@ export default function ReceptionRegistration() {
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Government ID Type</label>
-                  <select value={formData.govtIdType} onChange={e => updateField('govtIdType', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                    <option value="">None</option>
-                    <option value="voter">Voter ID</option>
-                    <option value="driving">Driving License</option>
-                    <option value="ration">Ration Card</option>
-                    <option value="pan">PAN Card</option>
-                  </select>
+                  <AppSelect
+                    value={formData.govtIdType}
+                    onValueChange={(value) => updateField('govtIdType', value)}
+                    options={[
+                      { value: '', label: 'None' },
+                      { value: 'voter', label: 'Voter ID' },
+                      { value: 'driving', label: 'Driving License' },
+                      { value: 'ration', label: 'Ration Card' },
+                      { value: 'pan', label: 'PAN Card' },
+                    ]}
+                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Government ID Number</label>
@@ -888,17 +1102,22 @@ export default function ReceptionRegistration() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1 block">Insurance Provider</label>
-                      <select value={formData.insuranceProvider} onChange={e => updateField('insuranceProvider', e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
-                        <option value="">None / Self-pay</option>
-                        <option value="star">Star Health</option>
-                        <option value="hdfc">HDFC ERGO</option>
-                        <option value="icici">ICICI Lombard</option>
-                        <option value="niva">Niva Bupa</option>
-                        <option value="ayushman">Ayushman Bharat (PMJAY)</option>
-                        <option value="cghs">CGHS</option>
-                        <option value="esi">ESI</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <AppSelect
+                        value={formData.insuranceProvider}
+                        onValueChange={(value) => updateField('insuranceProvider', value)}
+                        options={[
+                          { value: '', label: 'None / Self-pay' },
+                          { value: 'star', label: 'Star Health' },
+                          { value: 'hdfc', label: 'HDFC ERGO' },
+                          { value: 'icici', label: 'ICICI Lombard' },
+                          { value: 'niva', label: 'Niva Bupa' },
+                          { value: 'ayushman', label: 'Ayushman Bharat (PMJAY)' },
+                          { value: 'cghs', label: 'CGHS' },
+                          { value: 'esi', label: 'ESI' },
+                          { value: 'other', label: 'Other' },
+                        ]}
+                        className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1 block">Policy Number</label>
@@ -977,7 +1196,13 @@ export default function ReceptionRegistration() {
               <h2 className="font-semibold flex items-center gap-2"><FileText className="w-4 h-4" /> Review & Confirm</h2>
               <div className="bg-muted/30 rounded-lg px-4 py-2 text-sm flex items-center gap-4 flex-wrap">
                 <span><span className="text-muted-foreground">UHID:</span> <span className="font-mono font-bold">{newUHID}</span></span>
-                <span><span className="text-muted-foreground">Type:</span> <span className={formData.patientType === 'Emergency' ? 'text-destructive font-semibold' : 'font-semibold'}>{formData.patientType}</span></span>
+                <span>
+                  <span className="text-muted-foreground">Type:</span>{' '}
+                  <span className={isEmergencyJourney ? 'text-destructive font-semibold' : 'font-semibold'}>
+                    {formData.patientType}
+                    {formData.patientType !== selectedJourneyType ? ` -> ${selectedJourneyType}` : ''}
+                  </span>
+                </span>
                 <span><span className="text-muted-foreground">Category:</span> <span className={`px-1.5 py-0.5 rounded-full text-xs ${categoryConfig[formData.category].color}`}>{categoryConfig[formData.category].label}</span></span>
                 {formData.isMLC && <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-semibold">MLC Case</span>}
               </div>
@@ -1030,29 +1255,68 @@ export default function ReceptionRegistration() {
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Continue</button>
           ) : (
             <button onClick={() => {
-              const uhid = registerPatient({
-                name: `${formData.firstName} ${formData.lastName}`.trim(),
-                age: calculatedAge ?? 0,
-                gender: formData.gender === 'male' ? 'M' : formData.gender === 'female' ? 'F' : 'O',
-                phone: formData.phone,
-                bloodGroup: formData.bloodGroup || undefined,
-                abhaId: formData.abhaId || undefined,
-                aadhaar: formData.aadhaar || undefined,
-                category: formData.category,
-                patientType: formData.patientType,
-                department: formData.department || undefined,
-                assignedDoctor: formData.assignedDoctor || undefined,
-                allergies: formData.allergies || undefined,
-                chronicDiseases: formData.chronicDiseases || undefined,
-                branch: formData.branch,
-                insuranceProvider: formData.insuranceProvider || undefined,
-                policyNo: formData.policyNo || undefined,
-                isMLC: formData.isMLC,
+              const patientName = `${formData.firstName} ${formData.lastName}`.trim();
+              const registrationPatientType = formData.patientType;
+              const journeyPatientType = selectedJourneyType;
+
+              const result = startFrontDeskVisit({
+                patient: {
+                  name: patientName,
+                  age: calculatedAge ?? 0,
+                  gender: formData.gender === 'male' ? 'M' : formData.gender === 'female' ? 'F' : 'O',
+                  phone: formData.phone,
+                  photoUrl: formData.hasPhoto ? `captured:${Date.now()}` : undefined,
+                  guardianName: formData.guardianName || undefined,
+                  guardianRelation: formData.guardianRelation || undefined,
+                  guardianPhone: formData.guardianPhone || undefined,
+                  emergencyContactName: formData.emergencyContact || undefined,
+                  emergencyContactPhone: formData.emergencyPhone || undefined,
+                  emergencyContactRelation: formData.emergencyRelation || undefined,
+                  bloodGroup: formData.bloodGroup || undefined,
+                  abhaId: formData.abhaId || undefined,
+                  aadhaar: formData.aadhaar || undefined,
+                  category: formData.category,
+                  patientType: journeyPatientType,
+                  registrationPatientType,
+                  department: formData.department || 'General Medicine',
+                  assignedDoctor: formData.assignedDoctor || 'Dr. A. Shah',
+                  allergies: formData.allergies || undefined,
+                  chronicDiseases: formData.chronicDiseases || undefined,
+                  branch: formData.branch,
+                  insuranceProvider: formData.insuranceProvider || undefined,
+                  policyNo: formData.policyNo || undefined,
+                  tpaProvider: formData.tpaProvider || undefined,
+                  tpaPolicyNo: formData.tpaPolicyNo || undefined,
+                  tpaPreAuthStatus: formData.preAuthStatus,
+                  referralSource: formData.referralSource || undefined,
+                  referralDoctor: formData.referringDoctor || undefined,
+                  referralHospital: formData.referringHospital || undefined,
+                  referralClinic: formData.referringClinic || undefined,
+                  isMLC: formData.isMLC,
+                  mlcPoliceCase: formData.mlcPoliceCase || undefined,
+                  mlcReportingAuthority: formData.mlcReportingAuthority || undefined,
+                  mlcIncidentDescription: formData.mlcIncidentDescription || undefined,
+                },
+                notes: `Front-desk demo visit for ${registrationPatientType} (journey: ${journeyPatientType})`,
+                initialBillingItems: [
+                  {
+                    description: `${registrationPatientType} registration and front-desk processing`,
+                    amount: isEmergencyJourney
+                      ? 500
+                      : isAdmissionJourney
+                        ? 350
+                        : 250,
+                  },
+                ],
+              });
+              setDemoResult({
+                patientName,
+                ...result,
               });
               setMode('list'); setStep(0);
             }}
               className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
-              <Check className="w-4 h-4" /> Register Patient
+              <Check className="w-4 h-4" /> Start Live Visit
             </button>
           )}
         </div>
@@ -1066,7 +1330,7 @@ export default function ReceptionRegistration() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Patient Registration</h1>
-          <p className="text-sm text-muted-foreground mt-1">{existingPatients.length} registered patients</p>
+          <p className="text-sm text-muted-foreground mt-1">{storePatients.length} registered patients</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setMode('abha-lookup')} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium hover:bg-accent transition-colors">
@@ -1085,6 +1349,47 @@ export default function ReceptionRegistration() {
           </button>
         </div>
       </div>
+
+      {demoResult && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-success/30 bg-success/5 p-5"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-success">Live front-desk workflow started</p>
+              <h2 className="text-lg font-bold mt-1">{demoResult.patientName}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                UHID {demoResult.uhid}
+                {demoResult.tokenNo ? ` · Token #${demoResult.tokenNo}` : ''}
+                {demoResult.invoiceId ? ` · Invoice ${demoResult.invoiceId}` : ''}
+                {demoResult.admissionId ? ` · Admission ${demoResult.admissionId}` : ''}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => navigate('/reception/queue')}
+                className="px-3 py-2 rounded-lg border text-sm font-medium hover:bg-background transition-colors"
+              >
+                Open Queue Screen
+              </button>
+              <button
+                onClick={() => navigate('/reception/billing')}
+                className="px-3 py-2 rounded-lg border text-sm font-medium hover:bg-background transition-colors"
+              >
+                Open Billing
+              </button>
+              <button
+                onClick={() => navigate('/doctor/queue')}
+                className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Open Doctor Queue
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Multi-Branch Selector */}
       <div className="flex items-center gap-2">

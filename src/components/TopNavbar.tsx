@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_TABS, ROLE_BASE_PATH } from '@/config/roleNavigation';
-import { ROLE_LABELS } from '@/types/roles';
-import { Search, Bell, LogOut, ChevronRight, X, Clock, CheckCircle } from 'lucide-react';
+import { ROLE_BASE_PATH } from '@/config/roleNavigation';
+import { useTenantSettings } from '@/hooks/useTenantSettings';
+import { Search, Bell, LogOut, ChevronRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 
 const MOCK_NOTIFICATIONS = [
   { id: 1, title: "New lab report ready", message: "CBC report for patient UH-10234 is ready for review", time: "2 min ago", read: false },
@@ -17,6 +16,7 @@ const MOCK_NOTIFICATIONS = [
 
 export default function TopNavbar() {
   const { user, logout } = useAuth();
+  const { settings, getRoleLabel, getTabsForRole } = useTenantSettings();
   const location = useLocation();
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
@@ -43,7 +43,7 @@ export default function TopNavbar() {
 
   if (!user) return null;
 
-  const tabs = ROLE_TABS[user.role] ?? [];
+  const tabs = getTabsForRole(user.role);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Dynamic initials from user name
@@ -74,50 +74,59 @@ export default function TopNavbar() {
 
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
-      <div className="flex items-center h-14 px-5 gap-6">
+    <header className="sticky top-0 z-50 border-b bg-background">
+      <div className="flex items-center h-14 px-6 gap-6 max-w-[1440px] mx-auto w-full">
         {/* Branding with breadcrumb */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="font-bold text-base tracking-tight cursor-pointer" onClick={() => navigate(ROLE_BASE_PATH[user.role])}>Adrine</span>
-          <Badge variant="outline" className="text-[9px] hidden md:inline-flex">{ROLE_LABELS[user.role]}</Badge>
+        <div className="flex items-center gap-3 shrink-0">
+          <span 
+            className="font-bold text-lg tracking-tight cursor-pointer hover:text-muted-foreground transition-colors" 
+            onClick={() => navigate(ROLE_BASE_PATH[user.role])}>
+            {settings.branding.organizationShortName}
+          </span>
+          <div className="h-4 w-[1px] bg-border" />
+          <span className="text-xs font-medium tracking-wide uppercase text-muted-foreground">{getRoleLabel(user.role)}</span>
           {parentTab && (
             <>
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{parentTab.label}</span>
+              <span className="text-sm font-medium">{parentTab.label}</span>
             </>
           )}
         </div>
 
-        {/* Tabs — centered */}
-        <nav className="flex items-center gap-0.5 flex-1 justify-center overflow-x-auto scrollbar-hide">
+        {/* Tabs — left aligned, minimalist typography */}
+        <nav className="flex items-center gap-6 flex-1 px-4 overflow-x-auto scrollbar-hide">
           {tabs.map(tab => {
             const isActive = location.pathname === tab.path || (parentTab?.key === tab.key);
             return (
               <button
                 key={tab.key}
                 onClick={() => navigate(tab.path)}
-                className={`relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap
+                className={`relative py-1 text-sm font-medium transition-colors whitespace-nowrap
                   ${isActive
-                    ? 'text-foreground bg-accent'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                   }`}
               >
                 {tab.label}
+                {isActive && (
+                  <span className="absolute -bottom-[17px] left-0 w-full h-[2px] bg-foreground rounded-t-sm animate-scale-in" style={{ transformOrigin: 'center' }} />
+                )}
               </button>
             );
           })}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Search */}
           <div className="relative">
             {showSearch ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 animate-fade-in">
+                <Search className="w-4 h-4 text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2" />
                 <Input
                   ref={searchRef}
                   placeholder="Search modules..."
-                  className="w-48 h-8 text-sm"
+                  className="w-56 h-8 text-sm pl-8 bg-transparent border-muted-foreground/20 focus-visible:ring-1 focus-visible:border-transparent transition-all"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   onKeyDown={e => {
@@ -125,11 +134,11 @@ export default function TopNavbar() {
                     if (e.key === 'Enter' && searchResults.length > 0) handleSearchSelect(searchResults[0].path);
                   }}
                 />
-                <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="p-1">
+                <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="p-1 hover:bg-accent rounded-full transition-colors">
                   <X className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
                 {searchQuery && searchResults.length > 0 && (
-                  <div className="absolute top-full mt-1 right-0 w-48 bg-popover border rounded-md shadow-lg py-1 z-50">
+                  <div className="absolute top-full mt-2 right-0 w-56 bg-card border rounded-md shadow-sm py-1 z-50 animate-fade-in">
                     {searchResults.map(r => (
                       <button
                         key={r.key}
@@ -143,8 +152,8 @@ export default function TopNavbar() {
                 )}
               </div>
             ) : (
-              <button onClick={() => setShowSearch(true)} className="p-2 rounded-md hover:bg-accent transition-colors">
-                <Search className="w-4 h-4 text-muted-foreground" />
+              <button onClick={() => setShowSearch(true)} className="p-1.5 rounded-full hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
+                <Search className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -153,44 +162,34 @@ export default function TopNavbar() {
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-md hover:bg-accent transition-colors relative"
+              className="p-1.5 rounded-full hover:bg-accent transition-colors relative text-muted-foreground hover:text-foreground"
             >
-              <Bell className="w-4 h-4 text-muted-foreground" />
+              <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-destructive rounded-full text-[9px] text-destructive-foreground flex items-center justify-center font-bold">
-                  {unreadCount}
-                </span>
+                <span className="absolute top-0 right-0 w-2 h-2 bg-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.7)] outline outline-2 outline-background rounded-full animate-scale-in" />
               )}
             </button>
             {showNotifications && (
-              <div className="absolute top-full mt-1 right-0 w-80 bg-popover border rounded-lg shadow-lg z-50">
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                  <span className="font-semibold text-sm">Notifications</span>
+              <div className="absolute top-full mt-2 right-0 w-80 bg-card border shadow-sm z-50 p-2 animate-fade-up">
+                <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b">
+                  <span className="font-medium tracking-tight text-sm">Notifications</span>
                   {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
+                    <button onClick={markAllRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium">Mark as read</button>
                   )}
                 </div>
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-80 overflow-y-auto pr-1 space-y-1">
                   {notifications.map(n => (
                     <div
                       key={n.id}
-                      className={`px-4 py-3 border-b last:border-0 hover:bg-accent/50 transition-colors cursor-pointer ${!n.read ? 'bg-primary/5' : ''}`}
+                      className={`px-3 py-3 rounded-sm transition-all duration-300 cursor-pointer border-l-2 ${!n.read ? 'bg-info/5 border-info hover:bg-info/10' : 'bg-transparent border-transparent hover:bg-accent/50'}`}
                       onClick={() => setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))}
                     >
-                      <div className="flex items-start gap-2">
-                        {!n.read ? (
-                          <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                        ) : (
-                          <CheckCircle className="w-3 h-3 text-muted-foreground mt-1 shrink-0" />
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">{n.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">{n.time}</span>
-                          </div>
+                      <div className="flex items-start justify-between gap-3">
+                         <div>
+                          <p className={`text-sm tracking-tight ${!n.read ? 'font-bold text-foreground drop-shadow-sm' : 'font-medium text-muted-foreground'}`}>{n.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{n.message}</p>
                         </div>
+                        <span className="text-[10px] text-muted-foreground font-semibold whitespace-nowrap mt-0.5 tracking-wider uppercase">{n.time}</span>
                       </div>
                     </div>
                   ))}
@@ -199,21 +198,20 @@ export default function TopNavbar() {
             )}
           </div>
 
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-[1px] h-4 bg-border mx-1" />
 
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold">
+          <div className="flex items-center gap-2 pl-1 cursor-pointer group">
+            <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-medium tracking-wider group-hover:scale-105 transition-transform">
               {initials}
             </div>
-            <span className="text-sm font-medium hidden lg:block">{user.name}</span>
           </div>
 
           <button
             onClick={() => { logout(); navigate('/'); }}
-            className="p-2 rounded-md hover:bg-accent transition-colors"
+            className="p-1.5 rounded-full hover:bg-accent transition-colors text-muted-foreground hover:text-foreground ml-1"
             title="Logout"
           >
-            <LogOut className="w-4 h-4 text-muted-foreground" />
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>

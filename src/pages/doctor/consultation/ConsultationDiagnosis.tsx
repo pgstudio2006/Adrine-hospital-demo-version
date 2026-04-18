@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Stethoscope, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Diagnosis {
   id: string;
@@ -80,14 +81,19 @@ export default function ConsultationDiagnosis({ diagnoses, onChange }: Props) {
           onFocus={() => setShowSuggestions(true)}
           className="h-7 text-xs flex-1"
         />
-        <select value={certainty} onChange={e => setCertainty(e.target.value as any)} className="h-7 text-xs border rounded-md px-1.5 bg-background">
-          <option value="confirmed">Confirmed</option>
-          <option value="provisional">Provisional</option>
-          <option value="differential">Differential</option>
-        </select>
+        <Select value={certainty} onValueChange={(value) => setCertainty(value as 'confirmed' | 'provisional' | 'differential')}>
+          <SelectTrigger className="h-7 text-xs w-[130px]">
+            <SelectValue placeholder="Certainty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="confirmed">Confirmed</SelectItem>
+            <SelectItem value="provisional">Provisional</SelectItem>
+            <SelectItem value="differential">Differential</SelectItem>
+          </SelectContent>
+        </Select>
 
         {showSuggestions && search && (
-          <div className="absolute top-full left-0 right-12 mt-1 bg-card border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+          <div className="absolute top-full left-0 right-32 mt-1 bg-card border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
             {filtered.map(s => (
               <button key={s.code} onClick={() => addDiagnosis(s.code, s.text)}
                 className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors flex items-center gap-2">

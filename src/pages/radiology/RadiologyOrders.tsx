@@ -1,100 +1,116 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AppSelect } from "@/components/ui/app-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Eye, Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Eye, Calendar, CheckCircle, Clock } from "lucide-react";
+import { useHospital, type RadiologyOrder } from "@/stores/hospitalStore";
 
-interface ImagingOrder {
-  id: string;
-  uhid: string;
-  patient: string;
-  age: number;
-  gender: string;
-  doctor: string;
-  dept: string;
-  procedure: string;
-  modality: string;
-  bodyPart: string;
-  indication: string;
-  priority: "Routine" | "Urgent" | "Emergency";
-  status: "Pending" | "Scheduled" | "Imaging" | "Reporting" | "Completed" | "Cancelled";
-  orderDate: string;
-  scheduledDate?: string;
-  scheduledTime?: string;
-  equipment?: string;
-  technician?: string;
-  contrast: boolean;
-  prepInstructions: string;
-}
-
-const orders: ImagingOrder[] = [
-  { id: "RAD-4501", uhid: "UH-10042", patient: "Ravi Sharma", age: 45, gender: "M", doctor: "Dr. Patel", dept: "Medicine", procedure: "CT Chest with Contrast", modality: "CT Scan", bodyPart: "Chest", indication: "Persistent cough, rule out mass lesion", priority: "Urgent", status: "Scheduled", orderDate: "2026-03-08", scheduledDate: "2026-03-08", scheduledTime: "11:30", equipment: "CT Scanner — Siemens", technician: "Tech. Ramesh", contrast: true, prepInstructions: "NPO 4 hours, check creatinine" },
-  { id: "RAD-4500", uhid: "UH-10038", patient: "Anita Desai", age: 62, gender: "F", doctor: "Dr. Rao", dept: "Orthopedics", procedure: "X-ray Left Knee AP/Lateral", modality: "X-ray", bodyPart: "Left Knee", indication: "Knee pain, suspected OA", priority: "Routine", status: "Imaging", orderDate: "2026-03-08", scheduledDate: "2026-03-08", scheduledTime: "11:00", equipment: "X-ray — Philips Digital", technician: "Tech. Sunita", contrast: false, prepInstructions: "Remove metallic objects from area" },
-  { id: "RAD-4499", uhid: "UH-10035", patient: "Suresh Kumar", age: 58, gender: "M", doctor: "Dr. Mehta", dept: "Neurology", procedure: "MRI Brain with Contrast", modality: "MRI", bodyPart: "Brain", indication: "Sudden severe headache, suspected intracranial bleed", priority: "Emergency", status: "Reporting", orderDate: "2026-03-08", scheduledDate: "2026-03-08", scheduledTime: "10:00", equipment: "MRI 3T — GE Signa", technician: "Tech. Anil", contrast: true, prepInstructions: "Check for metallic implants, NPO 4 hours" },
-  { id: "RAD-4498", uhid: "UH-10029", patient: "Meena Joshi", age: 35, gender: "F", doctor: "Dr. Shah", dept: "ENT", procedure: "Ultrasound Neck", modality: "Ultrasound", bodyPart: "Neck/Thyroid", indication: "Thyroid nodule evaluation", priority: "Routine", status: "Completed", orderDate: "2026-03-08", scheduledDate: "2026-03-08", scheduledTime: "09:30", equipment: "US — Samsung HS60", technician: "Tech. Priya", contrast: false, prepInstructions: "None" },
-  { id: "RAD-4497", uhid: "UH-10021", patient: "Vikram Singh", age: 40, gender: "M", doctor: "Dr. Gupta", dept: "Emergency", procedure: "X-ray Chest PA", modality: "X-ray", bodyPart: "Chest", indication: "Breathlessness, rule out pneumothorax", priority: "Urgent", status: "Completed", orderDate: "2026-03-08", equipment: "X-ray — Philips Digital", technician: "Tech. Ramesh", contrast: false, prepInstructions: "None" },
-  { id: "RAD-4496", uhid: "UH-10018", patient: "Deepa Nair", age: 50, gender: "F", doctor: "Dr. Patel", dept: "Medicine", procedure: "CT Abdomen", modality: "CT Scan", bodyPart: "Abdomen", indication: "Abdominal pain, suspected appendicitis", priority: "Urgent", status: "Pending", orderDate: "2026-03-08", contrast: true, prepInstructions: "NPO 4 hours, check creatinine, oral contrast 1 hour prior" },
-  { id: "RAD-4495", uhid: "UH-10015", patient: "Arun Pillai", age: 72, gender: "M", doctor: "Dr. Rao", dept: "Orthopedics", procedure: "MRI Lumbar Spine", modality: "MRI", bodyPart: "Lumbar Spine", indication: "Chronic low back pain with radiculopathy", priority: "Routine", status: "Pending", orderDate: "2026-03-07", contrast: false, prepInstructions: "Check for metallic implants, remove jewellery" },
-];
-
-const statusColor: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+const statusColor: Record<RadiologyOrder["status"], string> = {
+  Ordered: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   Scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  Imaging: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  Reporting: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  Completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  "In Progress": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  Completed: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  Reported: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
 };
 
-const modalities = ["All", "X-ray", "CT Scan", "MRI", "Ultrasound", "Mammography", "PET Scan"];
-
 export default function RadiologyOrders() {
+  const { radiologyOrders, updateRadiologyOrder } = useHospital();
   const [search, setSearch] = useState("");
   const [modalityFilter, setModalityFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selected, setSelected] = useState<ImagingOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [scheduleDate, setScheduleDate] = useState("2026-03-08");
+  const [scheduleTime, setScheduleTime] = useState("11:30");
+  const [technician, setTechnician] = useState("Tech. Ramesh");
+  const [procedureNotes, setProcedureNotes] = useState("");
 
-  const filtered = orders.filter(o => {
-    const matchSearch = o.patient.toLowerCase().includes(search.toLowerCase()) || o.id.toLowerCase().includes(search.toLowerCase());
-    const matchModality = modalityFilter === "All" || o.modality === modalityFilter;
-    const matchStatus = statusFilter === "all" || o.status === statusFilter;
-    return matchSearch && matchModality && matchStatus;
-  });
+  const selectedOrder = radiologyOrders.find((order) => order.orderId === selectedOrderId) || null;
+  const modalities = ["All", ...Array.from(new Set(radiologyOrders.map(order => order.modality)))];
+
+  const filteredOrders = useMemo(() => {
+    return radiologyOrders.filter((order) => {
+      const query = search.toLowerCase();
+      const matchesSearch =
+        order.patientName.toLowerCase().includes(query) ||
+        order.orderId.toLowerCase().includes(query) ||
+        order.uhid.toLowerCase().includes(query);
+      const matchesModality = modalityFilter === "All" || order.modality === modalityFilter;
+      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+      return matchesSearch && matchesModality && matchesStatus;
+    });
+  }, [modalityFilter, radiologyOrders, search, statusFilter]);
+
+  const openOrder = (order: RadiologyOrder) => {
+    setSelectedOrderId(order.orderId);
+    setScheduleDate(order.scheduledDate || "2026-03-08");
+    setScheduleTime(order.scheduledTime || "11:30");
+    setTechnician(order.technician || "Tech. Ramesh");
+    setProcedureNotes(order.reportFindings || "");
+  };
+
+  const scheduleProcedure = () => {
+    if (!selectedOrder) return;
+    updateRadiologyOrder(selectedOrder.orderId, {
+      status: "Scheduled",
+      scheduledDate: scheduleDate,
+      scheduledTime: scheduleTime,
+      technician,
+    });
+  };
+
+  const markInProgress = () => {
+    if (!selectedOrder) return;
+    updateRadiologyOrder(selectedOrder.orderId, {
+      status: "In Progress",
+      technician,
+    });
+  };
+
+  const completeImaging = () => {
+    if (!selectedOrder) return;
+    updateRadiologyOrder(selectedOrder.orderId, {
+      status: "Completed",
+      technician,
+      reportFindings: procedureNotes || selectedOrder.reportFindings,
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Imaging Orders</h1>
-        <p className="text-muted-foreground text-sm">Manage radiology orders, scheduling, and procedure tracking</p>
+        <p className="text-muted-foreground text-sm">Live radiology scheduling and procedure tracking from doctor orders</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search patient or order ID..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search patient, UHID, or order ID..." value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" />
         </div>
-        <Select value={modalityFilter} onValueChange={setModalityFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Modality" /></SelectTrigger>
-          <SelectContent>{modalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Scheduled">Scheduled</SelectItem>
-            <SelectItem value="Imaging">Imaging</SelectItem>
-            <SelectItem value="Reporting">Reporting</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+        <AppSelect
+          value={modalityFilter}
+          onValueChange={setModalityFilter}
+          options={modalities.map((modality) => ({ value: modality, label: modality }))}
+          className="w-40 rounded-lg border bg-background px-3 py-2 text-sm"
+        />
+        <AppSelect
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          options={[
+            { value: "all", label: "All Status" },
+            { value: "Ordered", label: "Ordered" },
+            { value: "Scheduled", label: "Scheduled" },
+            { value: "In Progress", label: "In Progress" },
+            { value: "Completed", label: "Completed" },
+            { value: "Reported", label: "Reported" },
+          ]}
+          className="w-40 rounded-lg border bg-background px-3 py-2 text-sm"
+        />
       </div>
 
       <Card>
@@ -104,8 +120,8 @@ export default function RadiologyOrders() {
               <TableRow>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Patient</TableHead>
+                <TableHead>Study</TableHead>
                 <TableHead>Modality</TableHead>
-                <TableHead>Body Part</TableHead>
                 <TableHead>Doctor</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Status</TableHead>
@@ -113,24 +129,23 @@ export default function RadiologyOrders() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(o => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono text-sm">{o.id}</TableCell>
+              {filteredOrders.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No imaging orders. They appear here when doctors request radiology.</TableCell></TableRow>
+              ) : filteredOrders.map((order) => (
+                <TableRow key={order.orderId}>
+                  <TableCell className="font-mono text-sm">{order.orderId}</TableCell>
                   <TableCell>
-                    <div><span className="font-medium">{o.patient}</span><br /><span className="text-xs text-muted-foreground">{o.uhid} • {o.age}{o.gender}</span></div>
+                    <div><span className="font-medium">{order.patientName}</span><br /><span className="text-xs text-muted-foreground">{order.uhid}</span></div>
                   </TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{o.modality}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{o.bodyPart}</TableCell>
-                  <TableCell className="text-sm">{o.doctor}</TableCell>
+                  <TableCell className="text-sm max-w-[220px] truncate">{order.study}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{order.modality}</Badge></TableCell>
+                  <TableCell className="text-sm">{order.doctor}</TableCell>
                   <TableCell>
-                    <Badge variant={o.priority === "Emergency" ? "destructive" : o.priority === "Urgent" ? "default" : "secondary"} className="text-xs">{o.priority}</Badge>
+                    <Badge variant={order.priority === "Emergency" ? "destructive" : order.priority === "Urgent" ? "default" : "secondary"} className="text-xs">{order.priority}</Badge>
                   </TableCell>
-                  <TableCell><span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor[o.status]}`}>{o.status}</span></TableCell>
+                  <TableCell><span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor[order.status]}`}>{order.status}</span></TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => setSelected(o)}><Eye className="h-4 w-4" /></Button>
-                      {o.status === "Pending" && <Button variant="ghost" size="icon" title="Schedule"><Calendar className="h-4 w-4" /></Button>}
-                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => openOrder(order)}><Eye className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -139,124 +154,64 @@ export default function RadiologyOrders() {
         </CardContent>
       </Card>
 
-      {/* Order Detail / Schedule Dialog */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrderId(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          {selected && (
+          {selectedOrder && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  Order {selected.id}
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[selected.status]}`}>{selected.status}</span>
+                  Order {selectedOrder.orderId}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[selectedOrder.status]}`}>{selectedOrder.status}</span>
                 </DialogTitle>
               </DialogHeader>
 
-              <Tabs defaultValue="details">
-                <TabsList>
-                  <TabsTrigger value="details">Details</TabsTrigger>
-                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                  <TabsTrigger value="procedure">Procedure</TabsTrigger>
-                </TabsList>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Patient:</span> <span className="font-medium">{selectedOrder.patientName}</span></div>
+                <div><span className="text-muted-foreground">UHID:</span> {selectedOrder.uhid}</div>
+                <div><span className="text-muted-foreground">Doctor:</span> {selectedOrder.doctor}</div>
+                <div><span className="text-muted-foreground">Priority:</span> {selectedOrder.priority}</div>
+                <div className="col-span-2"><span className="text-muted-foreground">Study:</span> {selectedOrder.study}</div>
+              </div>
 
-                <TabsContent value="details" className="space-y-4 mt-3">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-muted-foreground">Patient:</span> <span className="font-medium">{selected.patient}</span></div>
-                    <div><span className="text-muted-foreground">UHID:</span> {selected.uhid}</div>
-                    <div><span className="text-muted-foreground">Age/Gender:</span> {selected.age}/{selected.gender}</div>
-                    <div><span className="text-muted-foreground">Doctor:</span> {selected.doctor}</div>
-                    <div><span className="text-muted-foreground">Department:</span> {selected.dept}</div>
-                    <div><span className="text-muted-foreground">Order Date:</span> {selected.orderDate}</div>
+              <div className="space-y-4 border rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm font-medium mb-1">Schedule Date</p>
+                    <Input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
                   </div>
-                  <div className="border border-border rounded-lg p-3 space-y-2">
-                    <p className="font-medium text-sm text-foreground">{selected.procedure}</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                      <span>Modality: {selected.modality}</span>
-                      <span>Body Part: {selected.bodyPart}</span>
-                      <span>Contrast: {selected.contrast ? "Yes" : "No"}</span>
-                      <span>Priority: {selected.priority}</span>
-                    </div>
-                    <div className="text-sm"><span className="text-muted-foreground">Indication:</span> {selected.indication}</div>
-                    {selected.prepInstructions !== "None" && (
-                      <div className="text-sm"><span className="text-muted-foreground">Preparation:</span> {selected.prepInstructions}</div>
-                    )}
+                  <div>
+                    <p className="text-sm font-medium mb-1">Schedule Time</p>
+                    <Input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} />
                   </div>
-                </TabsContent>
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium mb-1">Technician</p>
+                    <Input value={technician} onChange={(event) => setTechnician(event.target.value)} />
+                  </div>
+                </div>
 
-                <TabsContent value="schedule" className="space-y-4 mt-3">
-                  {selected.scheduledDate ? (
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div><span className="text-muted-foreground">Date:</span> {selected.scheduledDate}</div>
-                      <div><span className="text-muted-foreground">Time:</span> {selected.scheduledTime}</div>
-                      <div><span className="text-muted-foreground">Equipment:</span> {selected.equipment}</div>
-                      <div><span className="text-muted-foreground">Technician:</span> {selected.technician}</div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">Not yet scheduled. Assign a time slot below.</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div><Label>Date</Label><Input type="date" /></div>
-                        <div><Label>Time</Label><Input type="time" /></div>
-                        <div><Label>Equipment</Label>
-                          <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ct1">CT Scanner — Siemens</SelectItem>
-                              <SelectItem value="mri1">MRI 3T — GE Signa</SelectItem>
-                              <SelectItem value="xray1">X-ray — Philips Digital</SelectItem>
-                              <SelectItem value="us1">Ultrasound — Samsung HS60</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div><Label>Technician</Label>
-                          <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="t1">Tech. Ramesh</SelectItem>
-                              <SelectItem value="t2">Tech. Sunita</SelectItem>
-                              <SelectItem value="t3">Tech. Anil</SelectItem>
-                              <SelectItem value="t4">Tech. Priya</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <Button className="w-full" onClick={() => setSelected(null)}>
-                        <Calendar className="h-4 w-4 mr-2" /> Schedule Procedure
-                      </Button>
-                    </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Procedure Notes</p>
+                  <Textarea rows={4} value={procedureNotes} onChange={(event) => setProcedureNotes(event.target.value)} placeholder="Procedure observations, positioning, contrast notes..." />
+                </div>
+
+                <div className="flex gap-2">
+                  {(selectedOrder.status === "Ordered" || selectedOrder.status === "Scheduled") && (
+                    <Button className="flex-1" variant="outline" onClick={scheduleProcedure}>
+                      <Calendar className="h-4 w-4 mr-2" /> Save Schedule
+                    </Button>
                   )}
-                </TabsContent>
-
-                <TabsContent value="procedure" className="space-y-4 mt-3">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">Patient identity confirmed</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">Procedure details verified</span>
-                    </div>
-                    {selected.contrast && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-yellow-600" />
-                        <span className="text-sm">Contrast administration — confirm creatinine clearance</span>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><Label>Procedure Start</Label><Input type="time" /></div>
-                      <div><Label>Procedure End</Label><Input type="time" /></div>
-                    </div>
-                    <div><Label>Technician Notes</Label><Textarea placeholder="Imaging parameters, patient cooperation, any complications..." rows={3} /></div>
-                    <div><Label>Radiation Dose (mGy)</Label><Input type="number" step="0.01" placeholder="0.00" /></div>
-                    <div className="flex gap-2">
-                      <Button className="flex-1" onClick={() => setSelected(null)}>
-                        <CheckCircle className="h-4 w-4 mr-2" /> Complete Procedure
-                      </Button>
-                      <Button variant="destructive" onClick={() => setSelected(null)}>
-                        <XCircle className="h-4 w-4 mr-2" /> Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                  {(selectedOrder.status === "Ordered" || selectedOrder.status === "Scheduled") && (
+                    <Button className="flex-1" onClick={markInProgress}>
+                      <Clock className="h-4 w-4 mr-2" /> Start Procedure
+                    </Button>
+                  )}
+                  {(selectedOrder.status === "In Progress" || selectedOrder.status === "Scheduled") && (
+                    <Button className="flex-1" onClick={completeImaging}>
+                      <CheckCircle className="h-4 w-4 mr-2" /> Complete Imaging
+                    </Button>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </DialogContent>
